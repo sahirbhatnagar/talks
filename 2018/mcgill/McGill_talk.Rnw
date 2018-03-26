@@ -1,0 +1,1552 @@
+\documentclass{beamer}
+
+\usepackage{default}
+\usepackage{animate} %need the animate.sty file 
+\usepackage{graphicx}
+\graphicspath{{/home/sahir/Dropbox/jobs/laval/minicours/slides/}{/home/sahir/Dropbox/jobs/hec/talkHEC/}}
+\usepackage{hyperref, url}
+%\usepackage[round,sort]{natbib}   % bibliography omit 'round' option if you prefer square brackets
+%\bibliographystyle{apalike}
+\usepackage{biblatex}
+\bibliography{bib.bib}
+% Removes icon in bibliography
+\setbeamertemplate{bibliography item}[text]
+
+\usepackage[figurename=Fig.]{caption}
+\usepackage{subfig}
+\usepackage{tikz, pgfplots}
+\usetikzlibrary{arrows,shapes.geometric}
+\usepackage{color, colortbl,xcolor}
+\definecolor{lightgray}{RGB}{242,242,242}
+\definecolor{myblue}{RGB}{0,89,179}
+\usepackage{comment}
+\setbeamercolor{frametitle}{fg=myblue}
+\setbeamercolor{section in head/foot}{bg=myblue, fg=white}
+\setbeamercolor{author in head/foot}{bg=myblue}
+\setbeamercolor{date in head/foot}{bg=myblue}
+
+\usepackage{array}
+\newcolumntype{L}{>{\centering\arraybackslash}m{3cm}} % used for text wrapping in ctable
+\usepackage{ctable}
+\usepackage[utf8]{inputenc}
+\usepackage{fontenc}
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\def\widebar#1{\overline{#1}}
+%\definecolor{whitesmoke}{rgb}{0.96, 0.96, 0.96}
+\definecolor{pinkish}{RGB}{255,223,247}
+\definecolor{blueish}{RGB}{204,255,255}
+\definecolor{lime}{RGB}{0,0,200}
+\definecolor{myblues}{cmyk}{10,0,0,0}
+\definecolor{darktangerine}{RGB}{255, 140, 0}
+\definecolor{deepink}{RGB}{255,20,147}
+\definecolor{vermillion}{RGB}{204,121,167}
+\definecolor{alertblue}{RGB}{0,	114,178}
+\definecolor{whitesmoke}{RGB}{245, 245, 245}
+%\definecolor{whitesmoke}{RGB}{240, 248, 255}
+\setbeamercolor{alerted text}{fg=alertblue}
+
+
+\usepackage[ruled,vlined,noresetcount]{algorithm2e}
+
+\usetikzlibrary{calc}
+\usetikzlibrary{backgrounds,intersections,fit}
+\tikzset{isometricYXZ/.style={x={(1cm,0cm)}, y={(-1.299cm,-0.75cm)}, z={(0cm,1cm)}}}
+\newcommand*\ab{.4}
+
+
+\usetikzlibrary{shapes.geometric,arrows,shapes.symbols,decorations.pathreplacing,positioning,decorations.markings, matrix, overlay-beamer-styles}
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=2cm, minimum height=1cm, draw=black, fill=pinkish,text width=11.5cm]
+\tikzstyle{startstop2} = [rectangle, rounded corners, minimum width=2cm, minimum height=1cm, draw=black, fill=background,text width=11.5cm]
+\tikzstyle{startstop3} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm, draw=black, fill=beige,text width=11.5cm]
+\tikzstyle{startstop4} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm, draw=black, fill=blueish,text width=11.5cm]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=2cm, minimum height=1cm, text centered, draw=black, fill=blue!30,text width=1.5cm]
+\tikzstyle{process} = [rectangle, minimum width=1cm, minimum height=1cm, text centered, draw=black, fill=orange!30,text width=2cm]
+\tikzstyle{decision} = [diamond, minimum width=2cm, minimum height=1cm, text centered, draw=black, fill=green!30]
+\tikzstyle{arrow} = [thick,->,>=stealth]
+\tikzstyle{both} = [thick,<->,>=stealth, red]
+
+
+\tikzset{myshade/.style={minimum size=.4cm,shading=radial,inner color=white,outer color={#1!90!gray}}}
+\newcommand\mycirc[1][]{\tikz\node[circle,myshade=#1]{};}
+\newcommand\myrect[1][]{\tikz\node[rectangle,myshade=#1]{};}
+\newcommand\mystar[1][]{\tikz\node[star,star points=15,star point height=2pt,myshade=#1]{};}
+\newcommand\mydiamond[1][]{\tikz\node[diamond,myshade=#1]{};}
+\newcommand\myellipse[1][]{\tikz\node[ellipse,myshade=#1]{};}
+\newcommand\mykite[1][]{\tikz\node[kite,myshade=#1]{};}
+\newcommand\mydart[1][]{\tikz\node[dart,myshade=#1]{};}
+\newcommand\mycloud[1][]{\tikz\node[cloud,myshade=#1]{};}
+
+\tikzset{
+	ncbar angle/.initial=90,
+	ncbar/.style={
+		to path=(\tikztostart)
+		-- ($(\tikztostart)!#1!\pgfkeysvalueof{/tikz/ncbar angle}:(\tikztotarget)$)
+		-- ($(\tikztotarget)!($(\tikztostart)!#1!\pgfkeysvalueof{/tikz/ncbar angle}:(\tikztotarget)$)!\pgfkeysvalueof{/tikz/ncbar angle}:(\tikztostart)$)
+		-- (\tikztotarget)
+	},
+	ncbar/.default=0.5cm,
+}
+
+\tikzset{square left brace/.style={ncbar=0.5cm}}
+\tikzset{square right brace/.style={ncbar=-0.5cm}}
+
+\tikzset{round left paren/.style={ncbar=0.4cm,out=110,in=-110}}
+\tikzset{round right paren/.style={ncbar=0.5cm,out=60,in=-60}}
+
+\def\layersep{2.5cm}
+\def\Xmean{\skew3\widebar{X}}
+\def\Ymean{\widebar{Y}}
+\def\xmean{\bar{x}}
+\def\ymean{\bar{y}}
+\def\dint{\displaystyle\int}
+\def\dsum{\displaystyle\sum}
+
+\usepackage{fontspec}
+%\setsansfont{Fira Sans}
+%\setmonofont{Fira Mono}
+\setsansfont[ItalicFont={Fira Sans Light Italic},BoldFont={Fira Sans},BoldItalicFont={Fira Sans Italic}]{Fira Sans Light}
+\setmonofont[BoldFont={Fira Mono Medium}]{Fira Mono}
+
+
+\setbeamercolor{itemize item}{fg=myblue}
+\setbeamertemplate{itemize item}[square]
+
+\setbeamertemplate{navigation symbols}{\usebeamercolor[fg]{title in head/foot}\usebeamerfont{title in head/foot}\insertframenumber}
+\setbeamertemplate{footline}{}
+
+%\newtheorem{proposition}[theorem]{Proposition}
+%\newtheorem{exercise}[theorem]{Exercise}
+
+\titlegraphic{\hfill\includegraphics[height=1cm]{mcgill_logo.png}}
+
+
+%% You also use hyperref, and pick colors 
+\hypersetup{colorlinks,citecolor=orange,filecolor=red,linkcolor=brown,urlcolor=blue}
+
+\newcommand {\framedgraphiccaption}[2] {
+	\begin{figure}
+		\centering
+		\includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{#1}
+		\caption{#2}
+	\end{figure}
+}
+
+\newcommand {\framedgraphic}[1] {
+	\begin{figure}
+		\centering
+		\includegraphics[width=\textwidth,height=0.9\textheight,keepaspectratio]{#1}
+	\end{figure}
+}
+
+
+\AtBeginSection[]{
+	\begin{frame}
+		\vfill
+		\centering
+		\begin{beamercolorbox}[sep=8pt,center,shadow=true,rounded=true]{title}
+			\usebeamerfont{title}\insertsectionhead\par%
+		\end{beamercolorbox}
+		\vfill
+	\end{frame}
+}
+
+\newcommand\Wider[2][3em]{%
+	\makebox[\linewidth][c]{%
+		\begin{minipage}{\dimexpr\textwidth+#1\relax}
+			\raggedright#2
+		\end{minipage}%
+	}%
+}
+
+%% change fontsize of R code
+%\let\oldShaded\Shaded
+%\let\endoldShaded\endShaded
+%\renewenvironment{Shaded}{\scriptsize\oldShaded}{\endoldShaded}
+
+%% change fontsize of output
+\let\oldverbatim\verbatim
+\let\endoldverbatim\endverbatim
+\renewenvironment{verbatim}{\scriptsize\oldverbatim}{\endoldverbatim}
+
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{exercise}[theorem]{Exercise}
+
+
+%% You also use hyperref, and pick colors 
+\hypersetup{colorlinks,citecolor=orange,filecolor=red,linkcolor=brown,urlcolor=blue}
+
+
+
+\usepackage[cal=cm]{mathalfa}
+
+
+\newcommand{\tm}[1]{\textrm{{#1}}}
+\newcommand{\bx}{\textbf{\emph{x}}}
+\newcommand{\by}{\textbf{\emph{y}}}
+\newcommand{\bX}{\textbf{X}}
+\newcommand{\bW}{\textbf{W}}
+\newcommand{\bY}{\textbf{Y}}
+\newcommand{\bD}{\textbf{D}}
+\newcommand{\bH}{\textbf{H}}
+\newcommand{\trans}{\top}
+\newcommand{\bXtilde}{\widetilde{\bX}}
+\newcommand{\bYtilde}{\widetilde{\bY}}
+\newcommand{\bDtilde}{\widetilde{\bD}}
+\newcommand{\Xtilde}{\widetilde{X}}
+\newcommand{\Ytilde}{\widetilde{Y}}
+\newcommand{\Dtilde}{\widetilde{D}}
+\newcommand{\bu}{\textbf{u}}
+\newcommand{\bU}{\textbf{U}}
+\newcommand{\bV}{\textbf{V}}
+\newcommand{\bE}{\textbf{E}}
+\newcommand{\bb}{\textbf{\emph{b}}}
+\newcommand{\bI}{\mathbcal{I}}
+\newcommand{\be}{\boldsymbol{\varepsilon}}
+\newcommand{\bSigma}{\boldsymbol{\Sigma}}
+\newcommand{\bLambda}{\boldsymbol{\Lambda}}
+\newcommand{\bTheta}{\boldsymbol{\Theta}}
+\newcommand{\balpha}{\boldsymbol{\alpha}}
+%\newcommand{\ltwonorm}[1]{\lVert #1 \rVert}
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand {\bs}{\boldsymbol}
+%\newcommand{\norm}[1]{\left\Vert #1 \right\Vert}
+\newcommand{\xf}{\mathcal{X}}
+\newcommand{\pfrac}[2]{\left( \frac{#1}{#2}\right)}
+\newcommand{\e}{{\mathsf E}}
+\newcommand{\bt}{\boldsymbol{\theta}}
+\newcommand{\bmu}{\boldsymbol{\mu}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bbk}{\boldsymbol{\beta}_{(k)}}
+\newcommand{\bbkt}{\widetilde{\boldsymbol{\beta}}_{(k)}}
+\newcommand{\bgamma}{\boldsymbol{\gamma}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bPhi}{\boldsymbol{\Phi}}
+\newcommand{\bPsi}{\boldsymbol{\Psi}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\diag}{diag} % operator and subscript
+
+
+
+
+
+%\usepackage{amsthm}
+\setbeamertemplate{theorems}[numbered]
+
+
+%\definecolor{BlueTOL}{HTML}{222255}
+%\definecolor{BrownTOL}{HTML}{666633}
+%\definecolor{GreenTOL}{HTML}{225522}
+%\setbeamercolor{normal text}{fg=BlueTOL,bg=white}
+%\setbeamercolor{alerted text}{fg=BrownTOL}
+%\setbeamercolor{example text}{fg=GreenTOL}
+
+
+\setbeamercolor{block title alerted}{use={alerted text},
+	fg=alerted text.fg,
+	bg=whitesmoke}
+\setbeamercolor{block body alerted}{use={block title alerted, alerted text},
+	fg=black,
+	bg=block title alerted.bg!50!alerted text.bg}
+\setbeamercolor{block title example}{use={example text},
+	fg=darktangerine,
+	bg=whitesmoke}
+\setbeamercolor{block body example}{use={block title example, example text},
+	fg=black,
+	bg=block title example.bg!50!example text.bg}
+
+
+%\setbeamercolor{block title alerted}{fg=alertblue, bg=lightgray}
+%\setbeamercolor{block body alerted}{fg=black, bg=lightgray}
+%\setbeamercolor{block title example}{fg=darktangerine, bg=lightgray}
+%\setbeamercolor{block body example}{fg=black,bg=lightgray}
+
+%\setbeamercolor{block title example}{fg=darktangerine, bg=whitesmoke}
+%\setbeamercolor{block body example}{fg=black, bg=whitesmoke!50!whitesmoke}
+
+
+\begin{document}
+%\sffamily
+
+<<setup, include=FALSE>>=
+rm(list = ls())
+knitr::opts_chunk$set(cache=TRUE, message = FALSE, tidy = FALSE, echo = FALSE, fig.width = 6, fig.asp = 0.618, 
+fig.align = 'center', out.width = "100%", size = 'scriptsize')
+pacman::p_load(knitr)
+pacman::p_load(ggplot2)
+cbbPalette <- function() {
+c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+}
+trop <- RSkittleBrewer::RSkittleBrewer("trop")
+gg_sy <- theme(legend.position = "bottom", axis.text = element_text(size = 20), axis.title = element_text(size = 20), legend.text = element_text(size = 20), legend.title = element_text(size = 20))
+@
+
+
+%\author{Sahir Bhatnagar \inst{1}}
+%\author[shortname]{Sahir Rai Bhatnagar, PhD Candidate (Biostatistics) }
+%\institute[shortinst]{Department of Epidemiology, Biostatistics and Occupational Health}
+
+\title{Betting on Sparsity}
+\author{Sahir Bhatnagar, PhD Candidate, McGill Biostatistics}
+\institute[shortinst]{Joint work with Yi Yang and Celia Greenwood (McGill)}
+
+%\date
+
+\maketitle
+
+\begin{comment}
+\begin{frame}{Outline}
+	
+	\begin{enumerate}
+		\item A motivating example \pause
+		\item Background on penalization methods lasso and group lasso \pause
+		\item Overview of our software packages \pause
+		\item Present our penalization method: \texttt{sail} 
+	\end{enumerate}
+	
+\end{frame}
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%                    BET ON SPARSITY PRINCIPLE              %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\section{Betting on Sparsity}\label{bet-on-sparsity}
+
+\begin{frame}{Bet on Sparsity Principle}
+	
+	\begin{center}
+		\resizebox{225pt}{!}{
+			\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
+			\tikzstyle{every pin edge}=[<-,shorten <=1pt]
+			\tikzstyle{net node} = [circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=orange!100!cyan];
+			\tikzstyle{neuron}=[circle,fill=black!25,minimum size=17pt,inner sep=0pt]
+			\tikzstyle{input neuron}=[neuron, fill=green!50];
+			\tikzstyle{output neuron}=[neuron, fill=red!50];
+			\tikzstyle{hidden neuron}=[neuron, fill=blue!50];
+			\tikzstyle{annot} = [text width=4em, text centered]
+			
+			\node[draw=white,circle,minimum size=30mm,inner sep=0pt,fill=white, name=response2] at (0:0) {$Y$};
+			\node[draw,circle,minimum size=15mm,fill=darktangerine, name=response] at (0:0) {\Huge $Y$};
+			\foreach [count=\i] \a in {0, 5,...,359} 
+			{
+				\pgfmathsetmacro\k{mod(\i+\i-1,60)*1}  
+				\node[draw,circle,inner sep=0pt,minimum size=1pt,fill=myblue!\k!white, name=c\i] at (\a: 7.5) {$X_{\i}$};
+				\draw[color = gray, thin, ->, >=stealth'] (c\i) -- (response2);
+			}
+			\pause
+			\foreach [count=\i] \f in {72,31,62,60} 
+			{
+				\draw[color = deepink, line width=0.75mm, ->, >=stealth'] (c\f) -- (response2);
+			}
+			\end{tikzpicture}
+		}
+	\end{center}
+	
+\end{frame}
+
+\begin{frame}{Bet on Sparsity Principle}
+	
+	\vspace*{-0.35cm}
+	\begin{center}
+\large{\textbf{Use a procedure that does well in sparse problems, since no procedure does well in dense problems.}}\footnote<.->{\scriptsize{The elements of statistical learning. Springer series in statistics, 2001.}}
+	\end{center}
+	
+	\pause 
+	
+	\normalsize
+
+	\vspace*{0.35cm}
+
+	\begin{itemize}
+				  \setlength\itemsep{1.2em}
+	
+	\item We often don't have enough data to estimate so many parameters
+	%\item An underlying assumption of \textbf{\alert{simplicity}} in high-dimensional data ($N << p$)  
+	
+	\item Even when we do, we might want to identify a \textbf{\alert{relatively small number of predictors}} ($k < N$) that play an important role
+	
+	%\item A sparse statistical model is one in which only a \textbf{\alert{relatively small number of predictors}} ($k < N$) play an important role
+		
+	
+		\item Faster computation, easier to understand, and stable predictions on new datasets.
+		
+		%\item In practical, betting on sparsity can simply our lives
+		
+	\end{itemize}
+	
+\end{frame}
+
+
+\section{A Thought Experiment}
+
+
+\begin{frame}{How would you schedule a meeting of 20 people?}
+
+	\pause
+	\framedgraphic{doodlepoll.PNG}
+\end{frame}
+
+
+
+\begin{frame}{Doctors Bet on Sparsity Also}
+	
+	\pause
+	\framedgraphic{doctor.jpg}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%                    MOTIVATING EXAMPLE                     %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\section{Motivating Example}\label{motivating-example}
+
+\begin{frame}{Predictors of NHL Salary\footnote<.->{\scriptsize{https://www.kaggle.com/camnugent/nhl-salary-data-prediction-cleaning-and-modelling}}}
+	
+	\centering
+	\includegraphics[scale = 0.6]{predictors-crop}
+	
+\end{frame}
+
+\begin{frame}{Supervised Learning}
+	
+	\begin{itemize}
+		\item Learn the function $f$
+	\end{itemize}
+	
+	\begin{center}
+		\includegraphics[scale = 0.5]{hec}
+	\end{center}
+	
+\end{frame}
+
+\begin{frame}{Predictors of NHL Salary}
+	
+	\framedgraphic{all_hockey}
+	
+\end{frame}
+
+\begin{frame}{Predictors of NHL Salary}
+	
+	\framedgraphic{all_hockey2}
+	
+\end{frame}
+
+\begin{frame}{OLS vs.~Lasso Coefficients}
+	
+	\centering
+	\includegraphics[width=\textwidth]{mco_vs_lasso}
+	
+\end{frame}
+
+\begin{frame}{Lasso Selected Predictors}
+	
+	\centering
+	\includegraphics[width=\textwidth]{hockey-model}
+	
+\end{frame}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%                    BACKGROUND ON THE LASSO                %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\begin{frame}{Background on the Lasso}
+	
+	\begin{itemize}
+		\item Predictors $x_{ij}$, $j=1, \ldots, p$ and outcome values $y_i$ for the $i$th observation, $i=1, \ldots, n$ 
+		\item Assume $x_{ij}$ are standardized so that $\sum_i x_{ij}/n = 0$ and $\sum_i x_{ij}^2=1$. \pause The lasso$^1$ solves 
+		\begin{align*}
+			\widehat{\boldsymbol{\beta}}^{lasso} & = \argmin_{\beta} \frac{1}{2} \sum_{i=1}^{n} \left( y_i - \sum_{j=1}^p x_{ij}\beta_j \right)^2 \\
+			\text{subject to } & \sum_{j=1}^p |\beta_j| \leq \textcolor{deepink}{s}, \qquad s > 0
+		\end{align*}
+		\pause \item Equivalently, the Lagrange version of the problem, for $\lambda>0$
+		\begin{align*}
+			\widehat{\boldsymbol{\beta}}^{lasso} & = \argmin_{\beta} \frac{1}{2} \sum_{i=1}^{n} \left( y_i - \sum_{j=1}^p x_{ij}\beta_j \right)^2  + \textcolor{deepink}{\lambda} \sum_{j=1}^p |\beta_j|
+		\end{align*}
+	\end{itemize}
+	
+	\footnotetext[1]{\scriptsize{Tibshirani. JRSSB (1996)}}
+	
+\end{frame}
+
+\begin{frame}{Inspection of the Lasso Solution}
+	
+	\begin{itemize}
+		\item Consider a single predictor setting based on the observed data $\lbrace(x_i,y_i) \rbrace_{i=1}^n$. The problem then is to solve
+		\begin{align}
+			\widehat{\beta}^{lasso} & = \argmin_{\beta} \frac{1}{2} \sum_{i=1}^{n} \left( y_i - x_{i}\beta \right)^2  + \lambda |\beta| \label{eq:lassoone}
+		\end{align}
+		\item With a \textbf{\alert{standardized}} predictor, the lasso solution \eqref{eq:lassoone} is a \textbf{soft-thresholded} version of the least-squares (LS) estimate $\widehat{\beta}^{LS}$  
+		\begin{align*}
+			\widehat{\beta}^{lasso} & = S_{\lambda}\left( \widehat{\beta}^{LS} \right)= \text{sign}\left( \widehat{\beta}^{LS} \right) \left( |\widehat{\beta}^{LS}| - \lambda \right)_{+} \\  
+			& = \begin{cases} \widehat{\beta}^{LS} - \lambda, &  \widehat{\beta}^{LS} > \lambda \\
+				0 & |\widehat{\beta}^{LS}|  \leq \lambda \\
+				\widehat{\beta}^{LS} + \lambda & \widehat{\beta}^{LS} \leq -\lambda \\
+			\end{cases}
+		\end{align*}
+	\end{itemize}
+	
+\end{frame}
+
+\begin{frame}{Inspection of the Lasso Solution}
+	
+	\begin{itemize}
+		\item When the data are standardized, the lasso solution \textbf{shrinks the LS estimate toward zero} by the amount $\lambda$
+	\end{itemize}
+	
+	\vspace*{0.2cm}
+	
+	\centering
+	\includegraphics[scale=0.30]{ols_vs_lasso.pdf}
+	
+	\footnotetext[1]{\scriptsize{Hastie et al. Statistical learning with sparsity: the lasso and generalizations}}
+	
+\end{frame}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%                     ANIMATION            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{comment}
+\begin{frame}{Choosing the Model Complexity}
+	
+	\begin{center}
+		\animategraphics[controls,scale=0.3]{1}{/home/sahir/Dropbox/yi_yang/lasso_animation/plots/path_}{1}{100}
+	\end{center}
+	
+\end{frame}
+%\end{comment}
+
+
+\begin{comment}
+\begin{frame}{Group Lasso Motivation}
+
+\begin{itemize}
+	\item \textbf{\small{}\structure{Categorical predictors (factors):}}{\small{}
+		dummy variables}{\small \par}
+	\item \textbf{\small{}\structure{Additive Model: }}{\footnotesize{}$\sum_{k=1}^{K}f_{k}(X^{(k)})\approx\sum_{k=1}^{K}\sum_{m=1}^{M}\beta_{km}h_{m}(X^{(k)})$}
+	
+	\begin{itemize}
+		\item {\small{}ex. }\textbf{\small{}birth weight}{\small{} predicted by
+			the mother's }\textbf{\small{}age}{\small{} and }\textbf{\small{}weight}{\small{},
+		}\\
+		{\small{}$Age,$ $Age^{2}$, $Age^{3}$ and $Weight$, $Weight^{2}$,
+			$Weight^{3}$}{\small \par}
+	\end{itemize}
+\end{itemize}
+\small Group lasso partitions the variable coefficients into $K$ groups 
+\[
+\boldsymbol{\beta}=([\boldsymbol{\beta}^{(1)}]^{\intercal},[\boldsymbol{\beta}^{(2)}]^{\intercal},\cdots,[\boldsymbol{\beta}^{(K)}]^{\intercal})^{\intercal}
+\]
+Extended from the lasso penalty, the group lasso estimator is: 
+\[
+\underset{(\beta_{0},\boldsymbol{\beta})}{\min}\frac{1}{2}\left\Vert \mathbf{y}-\beta_{0}-\mathbf{X}\boldsymbol{\beta}\right\Vert _{2}^{2}+\lambda\sum_{k=1}^{K}\sqrt{p_{k}}\Vert\boldsymbol{\beta}^{(k)}\Vert_{2}\qquad p_{k}-\text{group size}
+\]
+
+\end{frame}
+\end{comment}
+
+\begin{frame}{Group Lasso Illustration}
+	
+%	\vspace*{-0.15cm}
+	
+	Extended from the lasso penalty, the group lasso estimator is: \[
+	\underset{(\beta_{0},\boldsymbol{\beta})}{\min}\frac{1}{2}\left\Vert \mathbf{y}-\beta_{0}-\mathbf{X}\boldsymbol{\beta}\right\Vert _{2}^{2}+\lambda\sum_{k=1}^{K}\sqrt{p_{k}}\Vert\boldsymbol{\beta}^{(k)}\Vert_{2}\qquad p_{k}-\text{group size}
+	\]
+	\pause
+%	\vspace*{-0.15cm} Consider the model:
+	 \[\text{Credit card balance} \sim \text{age} + \text{age}^2 + \text{height} + \text{height}^2 \]
+	
+	\vspace*{-0.25cm}
+	
+	\begin{figure}
+		\centering
+		\hspace*{-0.50cm}
+		\subfloat[Lasso \label{fig:1}]{
+			\resizebox{165pt}{!}{
+				\begin{tikzpicture}[inner sep=0.2cm]
+				\def \radi{4}
+				\def \x{3}
+				\def \y{3}
+				\def \z{3}
+				
+				\begin{scope}[isometricYXZ]
+				% the grid
+				\begin{scope}[color=gray!50, thin]
+				\foreach \xi in {0,...,\radi}{ \draw (\xi,\radi,0) -- (\xi,0,0) -- (\xi,0,\radi); }%
+				\foreach \yi in {1,...,\radi}{ \draw (0,\yi,\radi) -- (0,\yi,0) -- (\radi,\yi,0); }%
+				\foreach \zi in {0,...,\radi}{ \draw (0,\radi,\zi) -- (0,0,\zi) -- (\radi,0,\zi); }%
+				\end{scope}
+				
+				\draw[-latex, ultra thick, color=blue] (0,0,0) -- (5,0,0) node[anchor=west] {\Large $linear$};%
+				\draw[-latex, ultra thick, color=red] (0,0,0) -- (0,5,0) node[anchor=north] {\Large $quadratic$};%
+				\draw[-latex, ultra thick, color=black] (0,0,0) -- (0,0,5) node[anchor=east] {\Large credit card balance};%
+				
+				\fill[color=magenta, opacity=0.2] (0,0,0) -- (\x,0,0) -- (\x,\y,0) -- (0,\y,0) -- cycle; %
+				\fill[color=yellow, opacity=0.2] (0,0,0) -- (0,0,\z) -- (0,\y,\z) -- (0,\y,0) -- cycle; %
+				\fill[color=cyan, opacity=0.2] (0,0,0) -- (\x,0,0) -- (\x,0,\z) -- (0,0,\z) -- cycle;
+				
+				\draw[color=gray, thick]%
+				(0,\y,\z) -- (\x,\y,\z) -- (\x,\y,0) (\x,\y,\z) -- (\x,0,\z);%
+				\end{scope}
+				
+				%\shade[ball color=yellow] ($\y*(-1.299cm,-0.75cm)+(\x,\z)$) circle (0.1);%
+				\node[circle, minimum width=1cm, inner sep=0pt, outer sep=0pt, ball color=blue!20!white,opacity=0.90] (H-1) at ($\y*(-1.299cm,-0.75cm)+(0,\z)$) {\large \bfseries age};
+				\node[circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=blue!50!green!20!white,opacity=.9] (H-1) at (0,0,0) {\bfseries height};
+				\end{tikzpicture}
+			}
+		}
+		\subfloat[Group Lasso \label{fig:2}]{
+			\resizebox{165pt}{!}{
+				\begin{tikzpicture}[inner sep=0.2cm]
+				\def \radi{4}
+				\def \x{3}
+				\def \y{3}
+				\def \z{3}
+				
+				\begin{scope}[isometricYXZ]
+				% the grid
+				\begin{scope}[color=gray!50, thin]
+				\foreach \xi in {0,...,\radi}{ \draw (\xi,\radi,0) -- (\xi,0,0) -- (\xi,0,\radi); }%
+				\foreach \yi in {1,...,\radi}{ \draw (0,\yi,\radi) -- (0,\yi,0) -- (\radi,\yi,0); }%
+				\foreach \zi in {0,...,\radi}{ \draw (0,\radi,\zi) -- (0,0,\zi) -- (\radi,0,\zi); }%
+				\end{scope}
+				
+				\draw[-latex, ultra thick, color=blue] (0,0,0) -- (5,0,0) node[anchor=west] {\Large $linear$};%
+				\draw[-latex, ultra thick, color=red] (0,0,0) -- (0,5,0) node[anchor=north] {\Large $quadratic$};%
+				\draw[-latex, ultra thick, color=black] (0,0,0) -- (0,0,5) node[anchor=east] {\Large credit card balance};%
+				
+				\fill[color=magenta, opacity=0.2] (0,0,0) -- (\x,0,0) -- (\x,\y,0) -- (0,\y,0) -- cycle; %
+				\fill[color=yellow, opacity=0.2] (0,0,0) -- (0,0,\z) -- (0,\y,\z) -- (0,\y,0) -- cycle; %
+				\fill[color=cyan, opacity=0.2] (0,0,0) -- (\x,0,0) -- (\x,0,\z) -- (0,0,\z) -- cycle;
+				
+				\draw[color=gray, thick]%
+				(0,\y,\z) -- (\x,\y,\z) -- (\x,\y,0) (\x,\y,\z) -- (\x,0,\z);%
+				\end{scope}
+				
+				%\shade[ball color=yellow] ($\y*(-1.299cm,-0.75cm)+(\x,\z)$) circle (0.1);%
+				\node[circle, minimum width=1cm, inner sep=0pt, outer sep=0pt, ball color=blue!20!white,opacity=0.90] (H-1) at ($\y*(-1.299cm,-0.75cm)+(\x,\z)$) {\large \bfseries age};
+				\node[circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=blue!50!green!20!white,opacity=.9] (H-1) at (0,0,0) {\bfseries height};
+				\end{tikzpicture}
+			}
+			
+		}
+		%\caption{Caption.}
+		\label{fig:caption}
+	\end{figure}
+	
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%               OUR SOFTWARE               %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\section{Our Software}\label{our-software}
+
+\begin{frame}{Overview of Our Software Packages}
+	
+	\begin{itemize}
+		\item \textbf{\footnotesize{}\texttt{eclust}}{\footnotesize{} \textendash{} Bhatnagar et al. (2017, Genetic Epidemiology)}\\
+		{\footnotesize{}\url{https://cran.r-project.org/package=eclust}}{\footnotesize \par}
+		\item \textbf{\footnotesize{}\texttt{sail}}{\footnotesize{} \textendash{} Bhatnagar, Yang and Greenwood
+			(2018+, preprint)}\\
+		{\footnotesize{}\url{https://github.com/sahirbhatnagar/sail}}{\footnotesize \par}
+		\item \textbf{\footnotesize{}\texttt{ggmix}}{\footnotesize{} \textendash{} Bhatnagar, Oualkacha, Yang, Greenwood (2018+, preprint)}\\
+		{\footnotesize{}\url{https://github.com/sahirbhatnagar/ggmix}}{\footnotesize \par}
+		\item \textbf{\footnotesize{}\texttt{casebase}}{\footnotesize{} \textendash{} Bhatnagar$^1$, Turgeon$^1$, Yang, Hanley and Saarela (2018+, preprint)}\\
+		{\footnotesize{}\url{https://cran.r-project.org/package=casebase}}{\footnotesize \par}
+	\end{itemize}
+	
+	\footnotetext[1]{\scriptsize{joint co-authors}}
+	
+\end{frame}
+
+\begin{frame}{Overview of Our Software Packages}
+	
+	\vspace*{-0.25cm} \ctable[pos=h!,doinside=\footnotesize]{lcccc}{
+	}{
+	\FL
+	& \textbf{\texttt{eclust}}   & \textbf{\texttt{sail}} & \textbf{\texttt{ggmix}} & \textbf{\texttt{casebase}} \ML
+	\multicolumn{1}{m{2cm}}{\textbf{Model}}     \\
+	\rowcolor{whitesmoke}
+	\hspace*{0.4cm}Least-Squares & \cmark & \cmark & \cmark &  \\
+	\hspace*{0.4cm}Binary Classification & \cmark &     &    &  \\ 
+	\hspace*{0.4cm}Survival Analysis &    &     &    & \cmark \ML
+	\multicolumn{1}{m{2cm}}{\textbf{Penalty}}     \\
+	\rowcolor{whitesmoke}
+	\hspace*{0.4cm}Ridge        & \cmark &          & \cmark & \cmark \\
+	\hspace*{0.4cm}Lasso        & \cmark & \cmark   & \cmark   & \cmark \\
+	\rowcolor{whitesmoke}
+	\hspace*{0.4cm}Elastic Net & \cmark &           & \cmark   & \cmark \\
+	\hspace*{0.4cm}Group Lasso &  &  \cmark  & \cmark   &  \ML
+	\multicolumn{1}{m{2cm}}{\textbf{Feature}} & \\
+	\rowcolor{whitesmoke}
+	\hspace*{0.4cm}Interactions & \cmark & \cmark       &    & \cmark \\
+	\hspace*{0.4cm}Flexible Modeling & \cmark &  \cmark         &    & \cmark \\
+	\rowcolor{whitesmoke}
+	\hspace*{0.4cm}Random Effects &          &          & \cmark   &  \ML
+	\multicolumn{1}{m{2cm}}{\textbf{Data}} & $(x,y,e)$ & $(x,y,e)$ & $(x,y,\boldsymbol{\Psi})$ & $(x,t,\delta)$ \LL
+}
+
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%                     SAIL                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\section{\texorpdfstring{\texttt{sail}: Strong Additive Interaction
+		Learning}{: Strong Additive Interaction Learning}}\label{strong-additive-interaction-learning}
+
+\begin{frame}{Motivation 1: Non-linear Interactions}
+	\Wider[2em]{
+	\begin{tikzpicture}[
+	mymatrix/.style={matrix of nodes, nodes=typetag, row sep=1em},
+	inner/.style={circle,draw=blue!50,fill=blue!20,thick,inner sep=3pt},
+	typetag/.style={draw=gray, inner sep=1ex, anchor=west},
+	title/.style={draw=none, color=black, inner sep=0pt, align=center, font=\sffamily, scale=1.3},
+	env0/.style={rectangle, rounded corners, draw=black, fill=pinkish, align=center,inner sep=0.3cm, text width = 3.5cm},
+	env1/.style={rectangle, rounded corners, draw=black, fill=blueish, align=center, inner sep=0.3cm, text width = 3.5cm},
+	envbox/.style={rectangle, rounded corners, draw=black, fill=pinkish, inner sep=10pt, thick,column sep=0.0cm, text width = 2.8cm, row sep=0.0cm,align=center},
+	cpbox/.style={draw=black,rounded corners, fill=blueish,thick,inner sep=10pt, column sep=0cm, row sep=0.0cm, text width = 3.0cm, rectangle, align=center},
+	phenobox/.style={draw=black,rounded corners, fill=lightgray,thick,inner sep=10pt, column sep=0cm, row sep=0cm, text width = 2.9cm, shading = axis,shading angle=45, left color=pinkish, right color=blueish, align=center, rectangle}
+	]
+	\tikzstyle{annot} = [text width=10em, text centered];
+	        
+	\node[inner sep=0pt] (mom) at (8,0)
+	{\includegraphics[width=.20\textwidth]{mother.png}};
+	%\node[below of=mom] at (mom.south) {\textbf{Maternal care}};
+	\node[envbox, row sep=0.3cm, yshift = -1.3cm] at (mom.south) {\textbf{\alert{Environment}} \textbf{Gestational Diabetes}};
+	
+	\node[inner sep=0pt] (dna) at (4,0)
+	{\includegraphics[width=.25\textwidth]{dna.jpg}};
+	%\node[below of=dna] at (4,-2.35) {\textbf{Child's Epigenome}};
+	\node[cpbox, row sep=0.3cm, yshift = -.9cm] at (4,-2.35) {\textbf{\alert{Large Data}} \mbox{\textbf{Child's epigenome}} \mbox{$(p \approx 450\tm{k})$} };
+	
+	\node[inner sep=0pt] (child) at (0,0)
+	{\includegraphics[width=.30\textwidth]{obese.jpg}};
+	%\node[below of=child] at (8,-2.35) {\textbf{Child's Behaviour}};
+	\node[phenobox, row sep=0.3cm, yshift = -.9cm] at (0,-2.35) {\textbf{\alert{Phenotype}} \mbox{\textbf{Obesity measures}}};
+	
+	\node[annot,right of=child, xshift=1.15cm, yshift=0cm] {$\sim$};
+	\node[annot,right of=dna, xshift=0.9cm, yshift=0cm] {$\times$};
+	
+	%\draw[->,thick] (mom.east) -- (dna.west);
+	%\draw[->,thick] (dna.east) -- (child.west);
+	%node[midway,fill=white] {Principia Mathematica};
+	\end{tikzpicture}
+}
+\end{frame}
+
+\begin{frame}{Motivation 1: Non-linear Interactions}
+	
+	\vspace*{-0.35cm}
+	
+	
+	\framedgraphic{nonlinear_motivation.pdf}
+\end{frame}
+
+
+\begin{frame}{Motivation 2: Heredity Property}
+	
+	\small
+	\vspace*{-0.35cm} \[  
+	Y =  \beta_0 \cdot \mathbf{1} + \underbrace{\sum_{j=1}^p \beta_j X_{j} + \beta_E X_E}_{\text{main effects}}  + \underbrace{\sum_{j=1}^p \textcolor{red}{\alpha_j} X_E X_j}_{\text{interactions}} + \varepsilon
+	\] \pause  \vspace*{-0.15cm}
+	
+	\begin{alertblock}{Strong Heredity$^1$}
+		$$
+		\hat{\alpha}_{j} \neq 0 \qquad \Rightarrow \qquad \hat{\beta}_j \neq 0 \qquad \textrm{and} \qquad \hat{\beta}_E \neq 0  
+		$$
+	\end{alertblock}
+	
+	%\vspace*{-0.15cm}
+	
+	%\begin{exampleblock}{Weak Heredity$^1$}
+%		$$
+%		\hat{\alpha}_{j} \neq 0 \qquad \Rightarrow \qquad \hat{\beta}_j \neq 0 \qquad \textrm{or} \qquad \hat{\beta}_E \neq 0  
+%		$$
+%	\end{exampleblock}
+	
+%	\vspace*{-0.35cm}
+	
+	\begin{itemize}
+		\item Heredity property is desired for the purposes of \textbf{interpretability}$^2$
+		\item Large main effects are more likely to lead to appreciable interactions$^3$
+	\end{itemize}
+	
+	\footnotetext[1]{\scriptsize{Chipman. Canadian Journal of Statistics (1996)}}
+	\footnotetext[2]{\scriptsize{McCullagh and Nelder. Generalized Linear Models (1983)}}
+	\footnotetext[3]{\scriptsize{Cox. International Statistical Review (1984)}}
+	
+\end{frame}
+
+%\begin{frame}{Motivation 2: Non-linear Interactions}
+	
+%\begin{figure}
+%	\centering
+%	\includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{non_linear_example}
+%\end{figure}
+	
+
+	
+%\end{frame}
+
+\begin{frame}{Lasso interaction model}
+	
+	\begin{itemize}
+		\item $Y \rightarrow$ response
+		\item $X_E \rightarrow$ environment
+		\item $X_j \rightarrow$ predictors, $j=1, \ldots, p$
+	\end{itemize}
+	
+	\[  
+	Y =  \beta_0 \cdot \mathbf{1} + \sum_{j=1}^p \beta_j X_{j} + \beta_E X_E  + \sum_{j=1}^p \alpha_j X_E X_j + \varepsilon
+	\]
+	
+	\[
+	\underset{\beta_0, \boldsymbol{\beta}, \boldsymbol{\alpha} }{\mathrm{argmin}} \quad  \mathcal{L}(Y;\boldsymbol{\Theta}) + \textcolor{red}{\lambda (\lVert \boldsymbol{\beta} \rVert_1 + \lVert \boldsymbol{\alpha} \rVert_1)} 
+	\]
+	
+\end{frame}
+
+\begin{frame}{Strong Heredity Interactions: Current State of the Art}
+
+\Wider[3em]{
+	\ctable[pos=h!,doinside=\footnotesize]{lcc}{
+	}{
+	\FL
+	Type      & Model   & Software \ML
+	\multicolumn{1}{m{1cm}}{Linear}    & \multicolumn{1}{m{6cm}}{\texttt{CAP} (Zhao et al. 2009, \emph{Ann. Stat})}        &   \xmark    \\
+	& \multicolumn{1}{m{6cm}}{\texttt{SHIM} (Choi et al. 2009, \emph{JASA})}        &   \xmark    \\
+	& \multicolumn{1}{m{6cm}}{\texttt{hiernet} (Bien et al. 2013, \emph{Ann. Stat})}        &   \texttt{hierNet(x, y)}    \\
+	& \multicolumn{1}{m{6cm}}{\texttt{GRESH} (She and Jiang 2014, \emph{JASA})}        &  \xmark     \\
+	& \multicolumn{1}{m{6cm}}{\texttt{FAMILY} (Haris et al. 2014, \emph{JCGS})}    &  \texttt{FAMILY(x, z, y)}   \\
+	& \multicolumn{1}{m{6cm}}{\texttt{glinternet} (Lim and Hastie 2015, \emph{JCGS})}    & \texttt{glinternet(x, y)}  \\                    
+	& \multicolumn{1}{m{6cm}}{\texttt{RAMP} (Hao et al. 2016, \emph{JASA})}        & \texttt{RAMP(x, y)}   \\
+	& \multicolumn{1}{m{6cm}}{\texttt{LassoBacktracking} (Shah 2018, \emph{JMLR})}    & \texttt{LassoBT(x, y)}  \ML
+	\multicolumn{1}{m{1cm}}{Non-linear}     & \multicolumn{1}{m{6cm}}{\texttt{VANISH} (Radchenko and James 2010, \emph{JASA})}        & \xmark  \\
+	& \multicolumn{1}{m{6cm}}{\texttt{sail} (Bhatnagar et al. 2018+)}        & \texttt{sail(x, e, y, degree)}  \LL
+}
+}
+
+\end{frame}
+
+
+\begin{frame}{Our Extension to Nonlinear Effects}
+	
+	\vspace*{-.3cm} Consider the basis expansion
+	
+	\[
+	f_j(X_j) = \sum_{\ell = 1}^{p_j} \psi_{j\ell}(X_j) \beta_{j\ell} 
+	\]
+	
+	\[
+	f(X_1) =
+	\underbrace{\begin{bmatrix}
+		\psi_{11}(X_{11}) & \psi_{12}(X_{12}) & \cdots & \psi_{11}(X_{15}) \\
+		\vdots & \vdots & \cdots & \vdots \\
+		\vdots & \vdots & \cdots & \vdots \\
+		\psi_{11}(X_{i1}) & \psi_{12}(X_{i2}) & \cdots & \psi_{11}(X_{i5}) \\
+		\vdots & \vdots & \cdots & \vdots \\
+		\vdots & \vdots & \cdots & \vdots \\
+		\psi_{11}(X_{N1}) & \psi_{12}(X_{N2}) & \cdots & \psi_{11}(X_{N5}) \\
+		\end{bmatrix}_{N \times 5}}_{\boldsymbol{\Psi_1}} \quad \times \quad \underbrace{\begin{bmatrix}
+		\beta_{11}\\
+		\beta_{12}\\
+		\beta_{13}\\
+		\beta_{14}\\
+		\beta_{15}
+		\end{bmatrix}_{5 \times 1}}_{\theta_1}
+	\]
+	
+\end{frame}
+
+
+\begin{frame}[fragile]{B-Spline Expansion}
+	<<echo=c(1,2)>>=
+	x <- truncnorm::rtruncnorm(1000, a = 0, b = 1)
+	B <- splines::bs(x, df = 5, degree=3, intercept = FALSE)
+	knots <- attr(B,"knots")
+	bound.knots <- attr(B,"Boundary.knots")
+	B <- apply(B, 2, function(i) i[order(x)])
+	matplot(x[order(x)], B, type="n", lwd=2, main = sprintf("df=5, degree=3, inner.knots at c(33.33%%, 66.66%%) percentile"), 
+	ylab = "bs(x)", cex.lab=1.5, xlab = "x")
+	for (i in 1:5) lines(x[order(x)], B[,i], col = c("#E69F00", "#56B4E9", "#009E73", "#0072B2", "#D55E00")[i],lwd=3)
+	abline(v = knots, lty = 2, col = "black", lwd = 3)
+	@
+\end{frame}
+
+
+
+
+
+
+
+
+\begin{frame}{\texttt{sail}: Additive Interactions}
+	
+	\begin{itemize}
+		\item $ \theta_j = (\beta_{j1}, \ldots, \beta_{jp_j}) \in \mathbb{R}^{p_j} $
+		\item $ \alpha_j = (\alpha_{j1}, \ldots, \alpha_{jp_j})\in \mathbb{R}^{p_j} $
+		\item  $ \boldsymbol{\Psi}_j \rightarrow n \times p_j $ matrix of evaluations of the $ \psi_{j\ell} $
+		\item In our implementation, we use cubic \texttt{bsplines} with 5 degrees of freedom
+	\end{itemize}
+	
+	\begin{exampleblock}{Model}
+		$$
+		Y  =  \beta_0 \cdot \boldsymbol{1} + \sum_{j=1}^p \boldsymbol{\Psi}_j \theta_j + \beta_E X_E + \sum_{j=1}^p X_E \boldsymbol{\Psi}_j \alpha_{j}  + \varepsilon 
+		$$
+	\end{exampleblock}
+	
+\end{frame}
+
+\begin{frame}{\texttt{sail}: Strong Heredity}
+	\small
+	\begin{exampleblock}{Reparametrization$^1$}
+		\[\alpha_{j} = \gamma_{j}  \beta_E \theta_j\]
+	\end{exampleblock}
+	
+	\begin{alertblock}{Model}
+		\[Y  =  \beta_0 \cdot \boldsymbol{1} + \sum_{j=1}^p \bPsi_j \theta_j + \beta_E X_E + \sum_{j=1}^p \textcolor{red}{\gamma_{j}  \beta_E X_E \bPsi_j \theta_j} + \varepsilon\]
+	\end{alertblock}
+	
+	\begin{exampleblock}{Objective Function}
+		\[\underset{\beta_E, \boldsymbol{\theta}, \boldsymbol{\gamma} }{\mathrm{argmin}} \quad \mathcal{L}(Y;\boldsymbol{\Theta}) + \lambda(1-\alpha)  \left( w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right) +  \lambda\alpha \sum_{j=1}^{p} w_{jE} |\gamma_{j}|\]
+	\end{exampleblock}
+	
+	\footnotetext[1]{\scriptsize{Choi et al. JASA (2010)}}
+	
+\end{frame}
+
+\section{Algorithm}\label{algorithm}
+
+\begin{frame}{Block Relaxation (De Leeuw, 1994)}
+	
+	\begin{algorithm}[H]
+		\SetAlgoLined
+		%   \KwResult{Write here the result }
+		Set the iteration counter $k \leftarrow 0$ and fix $\alpha \in (0,1)$\;
+		\For{ each $\lambda$}{
+			\Repeat{convergence criterion is satisfied}{
+				\begin{align*}
+					\bgamma^{(k+1)} &\leftarrow \underset{\bgamma }{\mathrm{argmin}} \quad Q_{\lambda}\left(\boldsymbol{\gamma},\beta_E^{(k)}, \boldsymbol{\theta}^{(k)}\right) \\
+					\btheta^{(k+1)} &\leftarrow \underset{\boldsymbol{\btheta} }{\mathrm{argmin}} \quad Q_{\lambda} \left(\btheta, \beta_E^{(k)}, \bgamma^{(k+1)}\right)\\
+					\beta_E^{(k+1)} &\leftarrow \underset{\boldsymbol{\beta_E} }{\mathrm{argmin}} \quad Q_{\lambda} \left(\btheta^{(k+1)}, \beta_E, \bgamma^{(k+1)}\right)
+				\end{align*}
+				
+				$k \leftarrow k +1$
+			}
+		}
+		\caption{Block Relaxation Algorithm} \label{alg:cgd2}
+	\end{algorithm}
+	
+\end{frame}
+
+\begin{frame}{Implementation}
+	
+	\begin{alertblock}{Objective Function}
+	\[\underset{\beta_E, \boldsymbol{\theta}, \boldsymbol{\gamma} }{\mathrm{argmin}} \quad \mathcal{L}(Y;\boldsymbol{\Theta}) + \lambda(1-\alpha)  \left( w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right) +  \lambda\alpha \sum_{j=1}^{p} w_{jE} |\gamma_{j}| \]
+	\end{alertblock}
+	
+	\pause
+	
+	\begin{exampleblock}{Lasso problem}
+	\[\underset{\boldsymbol{\gamma} }{\mathrm{argmin}} \quad \mathcal{L}(Y;\boldsymbol{\Theta}) + \textcolor{lightgray}{\lambda(1-\alpha)   \left( w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right)} +   \lambda\alpha \sum_{j=1}^{p} w_{jE} |\gamma_{j}| \]
+	\end{exampleblock}
+	
+	\footnotetext[1]{\scriptsize{https://github.com/sahirbhatnagar/sail}}
+	
+\end{frame}
+
+\begin{frame}{Implementation}
+	
+	\begin{alertblock}{Objective Function}
+\[\underset{\beta_E, \boldsymbol{\theta}, \boldsymbol{\gamma} }{\mathrm{argmin}} \quad \mathcal{L}(Y;\boldsymbol{\Theta}) + \lambda(1-\alpha)   \left( w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right) +   \lambda\alpha \sum_{j=1}^{p} w_{jE} |\gamma_{j}| \]
+	\end{alertblock}
+	
+	\pause
+	
+	\begin{exampleblock}{Group Lasso problem}
+		\[\underset{\beta_E, \boldsymbol{\theta} }{\mathrm{argmin}} \quad \mathcal{L}(Y;\boldsymbol{\Theta}) + \lambda(1-\alpha)   \left( w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right) +  \textcolor{lightgray}{ \lambda\alpha \sum_{j=1}^{p} w_{jE} |\gamma_{j}|} \]
+	\end{exampleblock}
+	
+	\footnotetext[1]{\scriptsize{https://github.com/sahirbhatnagar/sail}}
+	
+\end{frame}
+
+\section{Simulations}\label{simulations}
+
+\begin{comment}
+\begin{frame}{Simulations Scenarios}
+	
+	\begin{columns}
+		\begin{column}{0.5\textwidth}
+			\textbf{Scenario 1: \textcolor{blue}{Easy}}
+			\begin{itemize}
+				\item $ Y = \sum_{j=1}^5 f(X_j) + X_E + E \times (f(X_1) + f(X_2)) $
+				\item $f(\cdot) \rightarrow$ B-splines with 5 df
+				\item $\theta_j \sim \mathcal{N}(0,1)$
+				\item $N=400, p=50$
+				\item $50 \times 5 \times 2 + 1 = 501$ parameters to estimate
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.5\textwidth}  %%<--- here
+			\textbf{Scenario 2: \textcolor{red}{Hard}}
+			\begin{itemize}
+				\item $ Y = \sum_{j=1}^4 f(X_j) + X_E + E  \times  (f(X_3) + f(X_4)) $
+				\item $f(X_1) \rightarrow$ linear 
+				\item $f(X_2) \rightarrow$ quadratic 
+				\item $f(X_3) \rightarrow$ sinusoidal 
+				\item $f(X_4) \rightarrow$ complicated sinusoidal
+			\end{itemize}
+		\end{column}
+	\end{columns}
+	
+\end{frame}
+\end{comment}
+
+\begin{frame}{Simulation Scenarios}
+	
+%\small
+
+\begin{enumerate}
+	\setlength\itemsep{0.1em}
+	\small
+	\item \textbf{Truth obeys strong hierarchy} (\textbf{\alert{right in our wheel house}}): \[Y = \sum_{j=1}^{4} f_j(X_{j}) + \beta_E \cdot X_{E} +  X_{E} \times (f_3(X_{3}) + f_4(X_{4})) + \varepsilon\]
+		\pause
+			
+	\item \textbf{Truth only has main effects:}  \[Y = \sum_{j=1}^{4} f_j(X_{j}) + \beta_E \cdot X_{E} + \varepsilon\]
+	
+	%\pause
+	
+	%\item \textbf{Truth is linear:} \[Y = \sum_{j=1}^{4}\beta_j X_{j} + \beta_E \cdot X_{E} +  X_{E} \times (X_{3} + X_{4}) + \varepsilon\]
+		
+\end{enumerate}
+
+\pause
+
+\begin{itemize}
+	\item $n=200$, $p = 1000$, $\beta_E = 1$, $SNR=2$ 
+	\item $X_j \sim \texttt{truncnorm(0,1)}, j=1,\ldots, 1000$, $E \sim \texttt{truncnorm(-1,1)}$
+	\item \texttt{sail} needs to estimate $1000 \times 5 \times 2 = 10\text{k}$ parameters
+\end{itemize}
+	
+	
+\end{frame}
+
+
+
+\begin{frame}{Scenario 1: Main Effects for 500 Simulations}
+	
+	\vspace*{-0.4cm}
+	
+	\framedgraphic{gendata2_main_n200_p1000_SNR2_betaE1_df5_degree3_alpha2_1a_500sims.pdf}
+	
+\end{frame}
+
+
+\begin{frame}{Scenario 1: Estimated Interaction Effects for $E \cdot f(X_3)$}
+%	\Wider[9em]{
+\begin{figure}
+\begin{minipage}{1\textwidth}
+\includegraphics[scale=0.2]{gendata2_inter_truth_n200_p1000_SNR2_betaE1_df5_degree3_alpha2_1a_500sims.pdf}
+\includegraphics[scale=0.20]{gendata2_inter25_n200_p1000_SNR2_betaE1_df5_degree3_alpha2_1a_500sims.pdf}
+\vspace{0.02cm}
+\includegraphics[scale=0.2]{gendata2_inter50_n200_p1000_SNR2_betaE1_df5_degree3_alpha2_1a_500sims.pdf}
+\includegraphics[scale=0.20]{gendata2_inter75_n200_p1000_SNR2_betaE1_df5_degree3_alpha2_1a_500sims.pdf}
+\end{minipage}
+\end{figure}
+%	}
+\end{frame}
+
+
+\begin{frame}{Scenario 1: Estimated Interaction Effects for $E \cdot f(X_4)$}
+	%	\Wider[9em]{
+	\begin{figure}
+		\begin{minipage}{1\textwidth}
+			\includegraphics[scale=0.2]{gendata2_inter_truth_X4_n200_p1000_SNR2_betaE1_df5_degree3_alpha2_1a_500sims.pdf}
+			\includegraphics[scale=0.20]{gendata2_inter25_X4_n200_p1000_SNR2_betaE1_df5_degree3_alpha2_1a_500sims.pdf}
+			\vspace{0.02cm}
+			\includegraphics[scale=0.2]{gendata2_inter50_X4_n200_p1000_SNR2_betaE1_df5_degree3_alpha2_1a_500sims.pdf}
+			\includegraphics[scale=0.20]{gendata2_inter75_X4_n200_p1000_SNR2_betaE1_df5_degree3_alpha2_1a_500sims.pdf}
+		\end{minipage}
+	\end{figure}
+	%	}
+\end{frame}
+
+
+
+
+\begin{frame}{Right in Our Wheel House Simulation Results}
+	
+	\framedgraphic{upset_selection.pdf}
+	
+\end{frame}
+
+
+\begin{frame}{Right in Our Wheel House Simulation - Comparison}
+	
+
+\framedgraphic{p1_cvmse.pdf}
+
+\end{frame}
+
+\begin{frame}{\texttt{GLinternet}: 70\% of points below the line}
+	\framedgraphic{glint_cv_mse_scenario1.pdf}
+\end{frame}
+
+
+\begin{frame}{10-Fold CV MSE vs. Training MSE Comparison}
+	%	\Wider[9em]{
+
+	\begin{figure}
+		\begin{minipage}{1\textwidth}
+				\centering
+			\includegraphics[scale=0.23]{cvmse_mse_GLinternet.pdf}
+			\includegraphics[scale=0.23]{cvmse_mse_lasso.pdf}
+			\vspace{0.02cm}
+			\includegraphics[scale=0.23]{cvmse_mse_lassoBT.pdf}
+			\includegraphics[scale=0.23]{cvmse_mse_sail.pdf}
+		\end{minipage}
+	\end{figure}
+	%	}
+\end{frame}
+
+
+
+\begin{frame}{Right in Our Wheel House Simulation - Comparison}
+	
+	\vspace*{-0.4cm}
+	
+	\framedgraphic{p1_fprtpr.pdf}
+\end{frame}
+
+
+
+\begin{comment}
+\begin{frame}{Right in Our Wheel House Simulation - Comparison}
+	\Wider[9em]{
+		\begin{figure}
+			\begin{minipage}[h]{0.45\linewidth}
+				\centering
+				\includegraphics[scale=0.28]{p1_fprtpr.pdf}
+				%\caption{Regression}
+				%\label{fig:a}
+			\end{minipage}
+			%\hspace{0.5cm}
+			\begin{minipage}[h]{0.45\linewidth}
+				\centering
+				\includegraphics[scale=0.28]{p1_cvmse.pdf}
+				%\caption{Classification}
+				%\label{fig:b}
+			\end{minipage}
+		\end{figure}
+	}
+\end{frame}
+\end{comment}
+
+
+\begin{frame}{No Interactions Simulation - Comparison}
+	\Wider[9em]{
+		\begin{figure}
+			\begin{minipage}[h]{0.45\linewidth}
+				\centering
+				\includegraphics[scale=0.28]{p5_fprtpr.pdf}
+				%\caption{Regression}
+				%\label{fig:a}
+			\end{minipage}
+			%\hspace{0.5cm}
+			\begin{minipage}[h]{0.45\linewidth}
+				\centering
+				\includegraphics[scale=0.28]{p5_cvmse.pdf}
+				%\caption{Classification}
+				%\label{fig:b}
+			\end{minipage}
+		\end{figure}
+	}
+\end{frame}
+
+\begin{comment}
+\begin{frame}{Linear Effects Simulation - Comparison}
+	\Wider[9em]{
+		\begin{figure}
+			\begin{minipage}[h]{0.45\linewidth}
+				\centering
+				\includegraphics[scale=0.28]{p4_fprtpr.pdf}
+				%\caption{Regression}
+				%\label{fig:a}
+			\end{minipage}
+			%\hspace{0.5cm}
+			\begin{minipage}[h]{0.45\linewidth}
+				\centering
+				\includegraphics[scale=0.28]{p4_cvmse.pdf}
+				%\caption{Classification}
+				%\label{fig:b}
+			\end{minipage}
+		\end{figure}
+	}
+\end{frame}
+\end{comment}
+
+\begin{frame}{\texttt{sail} with \texttt{degree=1} when Truth is Linear}
+	\framedgraphic{upset_selection_truth_linear_sail_degree1.pdf}
+\end{frame}
+
+
+\begin{frame}{Computing time}
+	\framedgraphic{p1_time.pdf}
+\end{frame}
+
+
+\section{\texttt{sail} R package}
+
+
+\begin{frame}[fragile]{\texttt{sail} R package: Solution Path
+		results}
+	
+	<<echo=TRUE, eval=FALSE>>=
+	sail::plot(fit)
+	@
+	
+	\begin{figure}
+		\centering
+		\includegraphics[width=\textwidth,height=0.75\textheight,keepaspectratio]{gendata2_fit.pdf}
+	\end{figure}
+	
+\end{frame}
+
+
+\begin{frame}[fragile]{\texttt{sail} R package: Cross-validation
+		results}
+	
+<<echo=TRUE, eval=FALSE>>=
+sail::plot(cvfit)
+@
+	
+	\begin{figure}
+		\centering
+		\includegraphics[width=\textwidth,height=0.75\textheight,keepaspectratio]{gendata2_cvfit.pdf}
+	\end{figure}
+	
+\end{frame}
+
+
+
+\begin{frame}[fragile]{\texttt{sail} A Note on the Second Tuning Parameter
+		results}
+	
+	\begin{figure}
+		\centering
+		\includegraphics[width=\textwidth,height=0.75\textheight,keepaspectratio]{alpha.pdf}
+	\end{figure}
+	
+\end{frame}
+
+
+
+\section{Real Data Application}
+
+\begin{frame}{Alzheimer's Disease Neuroimaging Initiative (ADNI)}
+	
+	\small
+	
+	\vspace*{-0.01cm}
+	
+	\begin{itemize}
+		\item Alzheimer's is an irreversible neurodegenerative disease that results in a loss of mental function due to the \textbf{\alert{deterioration of brain tissue}}.
+		\item The overall goal of ADNI is to \textbf{\alert{validate biomarkers}} for use in Alzheimer's disease clinical treatment trials
+	\end{itemize}
+	
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.21]{adni.png}
+\end{figure}
+	
+\end{frame}
+
+\begin{frame}{Interaction between A$\beta$ Protein and APOE gene}
+	
+	\begin{itemize}
+		\item $\mathbf{E}$: APOE4 allele increases the risk for Alzheimer's and lowers the age of onset
+		\item $\mathbf{X}$: PET amyloid imaging to assess A$\beta$ protein load in 96 brain regions
+		\item $\mathbf{Y}$: General cognitive decline measured by mini-mental state examination
+		%\item Il existe une corrélation important entre le gène APOE et la maladie d'Alzheimer.
+		\item $3 \times 96 \times 2 + 1 = 577$ parameters to estimate
+	\end{itemize}
+	
+	\framedgraphic{AZ_pic_crop}
+	
+\end{frame}
+
+
+\begin{frame}{Variable Selection Results: \texttt{sail} vs. \texttt{lasso}}
+	
+	\Wider[9em]{
+		\begin{figure}
+			\begin{minipage}[h]{0.45\linewidth}
+				\centering
+				\includegraphics[width=\textwidth]{apoe_interactions_sail_coefs_with_diagnosis}
+				\caption{\texttt{sail}: 7 variables}
+				\label{fig:a}
+			\end{minipage}
+			%\hspace{0.5cm}
+			\begin{minipage}[h]{0.45\linewidth}
+				\centering
+				\includegraphics[width=\textwidth]{apoe_interactions_lasso_coefs_with_diagnosis}
+				\caption{\texttt{lasso}: 13 variables}
+				\label{fig:b}
+			\end{minipage}
+		\end{figure}
+	}
+	
+\end{frame}
+
+\begin{frame}{5-Fold Cross-Validated MSE}
+	
+	\centering
+	\framedgraphic{apoe_interactions_5foldcv_mse_with_lasso_cropped_v2}
+	
+\end{frame}
+
+
+\begin{comment}
+\begin{frame}{\texttt{sail}: Variable Selection Results}
+	
+	\vspace*{-0.35cm}
+	
+	\centering
+	\includegraphics[width=\textwidth]{apoe_interactions_sail_coefs_with_diagnosis}
+	
+\end{frame}
+
+\begin{frame}{\texttt{lasso}: Variable Selection Results}
+
+\vspace*{-0.35cm}
+
+\centering
+\includegraphics[width=\textwidth]{apoe_interactions_lasso_coefs_with_diagnosis}
+
+\end{frame}
+
+
+\end{comment}
+
+\begin{frame}{\texttt{sail}: Interactions with the \texttt{supramarginal gyrus} region}
+	
+	\centering
+	\includegraphics[width=\textwidth]{apoe_interactions_mmscore_amy_beta_supramarginal_gyrus_right_diag}
+	
+\end{frame}
+
+
+
+
+\section{Discussion}\label{discussion}
+
+\begin{frame}{Strengths and Limitations}
+	
+	\textcolor{blue}{\textbf{Strengths}}
+	
+	\begin{itemize}
+		\item Non-linear environment interactions with strong heredity property in $ p >> N$
+		\item \texttt{sail} allows for flexible modeling of input variables 
+		%\item \texttt{ggmix} package provides first implementation of group lasso in mixed models
+	\end{itemize}
+	
+	\vspace{0.2cm}
+	
+	\pause
+	\textcolor{deepink}{\textbf{Limitations}}
+	
+	\begin{itemize}
+		\item \texttt{sail} can currently only handle $ E \cdot f(X) $ or $ f(E) \cdot X $
+		\item Does not allow for $ f (X_1, E) $ or $ f(X_1, X_2) $
+		%\item Current implementation of \texttt{sail} is slow due to cross validation for 2 tuning parameters
+		\item Memory footprint is an issue 
+	\end{itemize}
+	
+\end{frame}
+
+\begin{frame}{Future Directions}
+	\small
+	\begin{itemize}
+		\item Weak heredity property $ \rightarrow \alpha_j = \gamma_j (|\beta_j| + |\beta_E|) $
+		\item Implement ADMM algorithm for scalability. Distributed computing (GPU)
+		%\item Extension to nonconvex penalties (SCAD, MCP)
+		\item Binary Outcomes
+		\item bi-level selection:
+	\end{itemize}
+	
+		\[
+		f(X_1) =
+		\underbrace{\begin{bmatrix}
+		X_{11}	&\psi_{11}(X_{11}) & \psi_{12}(X_{12}) & \cdots & \psi_{11}(X_{15}) \\
+			&\vdots & \vdots & \cdots & \vdots \\
+			&\vdots & \vdots & \cdots & \vdots \\
+		X_{i1}	&\psi_{11}(X_{i1}) & \psi_{12}(X_{i2}) & \cdots & \psi_{11}(X_{i5}) \\
+			&\vdots & \vdots & \cdots & \vdots \\
+			&\vdots & \vdots & \cdots & \vdots \\
+		X_{N1}	&\psi_{11}(X_{N1}) & \psi_{12}(X_{N2}) & \cdots & \psi_{11}(X_{N5}) \\
+			\end{bmatrix}_{N \times 5}}_{\boldsymbol{\Psi_1}} \quad \times \quad \underbrace{\begin{bmatrix}
+			\beta_{\text{linear}}\\
+			\beta_{11}\\
+			\beta_{12}\\
+			\beta_{13}\\
+			\beta_{14}\\
+			\beta_{15}
+			\end{bmatrix}_{6 \times 1}}_{\theta_1}
+		\]
+	
+\end{frame}
+
+\begin{frame}{Acknowledgements}
+	
+	\begin{columns}[c] % The "c" option specifies centered vertical alignment while the "t" option is used for top vertical alignment
+		
+		%\column{.45\textwidth} % Left column and width
+		
+		%\begin{itemize}
+		%\footnotesize
+		%\item \textbf{Dr. Celia Greenwood}
+		%\item \mbox{Dr. Yang}
+		%\item Maxime Turgeon, Kevin McGregor, Lauren Mokry, \mbox{Dr. Forest}
+		%\item \textbf{Greg Voisin}, \mbox{Dr. Forgetta}, \mbox{Dr. Klein} 
+		%\item \textbf{Mothers and children from the study}
+		%\end{itemize}
+		
+		\column{.75\textwidth} % Right column and width
+		\begin{figure}
+			\includegraphics[width=0.7\columnwidth]{Logo-LUDMER.png}\\[10mm]
+			\includegraphics[width=0.7\columnwidth]{lady.png}\\[10mm]
+			\includegraphics[width=0.7\columnwidth]{mcgill.png}
+		\end{figure}
+		
+	\end{columns}
+	
+\end{frame}
+
+\begin{frame}{References}
+	
+	\begin{itemize}
+		\item \scriptsize{Radchenko, P., \& James, G. M. (2010). Variable selection using adaptive nonlinear interaction structures in high dimensions. Journal of the American Statistical Association, 105(492), 1541-1553.}
+		
+		\item \scriptsize{Choi, N. H., Li, W., \& Zhu, J. (2010). Variable selection with the strong heredity constraint and its oracle property. Journal of the American Statistical Association, 105(489), 354-364.}
+		
+		\item \scriptsize{Chipman, H. (1996). Bayesian variable selection with related predictors. Canadian Journal of Statistics, 24(1), 17-36.}
+		
+		\item \scriptsize{Friedman, J., Hastie, T., \& Tibshirani, R. (2010). Regularization paths for generalized linear models via coordinate descent. Journal of statistical software, 33(1)}
+		
+		\item \scriptsize{Yang, Y., \& Zou, H. (2015). A fast unified algorithm for solving group-lasso penalize learning problems. Statistics and Computing, 25(6), 1129-1141}
+		
+		\item \scriptsize{De Leeuw, J. (1994). Block-relaxation algorithms in statistics. In Information systems and data analysis (pp. 308-324). Springer Berlin Heidelberg.}
+	\end{itemize}
+	
+	\LARGE sahirbhatnagar.com
+	
+\end{frame}
+
+
+
+
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%                     THE END              %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+\begin{frame}[fragile]{Session Info}
+	\tiny
+	
+	<<echo=FALSE, comment = NA, size = 'tiny'>>=
+	print(sessionInfo(), locale = FALSE)
+	@
+\end{frame}
+
+\section{Appendix}
+
+\begin{frame}{Why the L1 norm ?}
+	
+	\begin{itemize}
+		\item For a fixed real number $q \geq 0$ consider the criterion
+		$$
+		\widetilde{\boldsymbol{\beta}} = \argmin_{\boldsymbol{\beta}} \left\lbrace \sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^p x_{ij}\beta_j \right)^2 + \lambda \sum_{j=1}^p |\beta_j|^q \right\rbrace
+		$$
+		
+		\item Why do we use the $\ell_1$ norm? Why not use the $q=2$ (Ridge) or any $\ell_q$ norm?
+		
+		\begin{center}
+			\includegraphics[scale=0.25]{regions.png}
+			\end{center}
+			
+			
+			\item $q=1$ is the smallest value that yields a sparse solution \alert{and} yields a \textbf{convex} problem $\to$ scalable to high-dimensional data
+			\item For $q <1$ the constrained region is \textbf{nonconvex}
+			\end{itemize}
+			
+			\end{frame}
+
+
+\begin{frame}{Linear Effects Simulation - Comparison}
+	\Wider[9em]{
+		\begin{figure}
+			\begin{minipage}[h]{0.45\linewidth}
+				\centering
+				\includegraphics[scale=0.28]{p4_fprtpr.pdf}
+				%\caption{Regression}
+				%\label{fig:a}
+			\end{minipage}
+			%\hspace{0.5cm}
+			\begin{minipage}[h]{0.45\linewidth}
+				\centering
+				\includegraphics[scale=0.28]{p4_cvmse.pdf}
+				%\caption{Classification}
+				%\label{fig:b}
+			\end{minipage}
+		\end{figure}
+	}
+\end{frame}
+
+\end{document}

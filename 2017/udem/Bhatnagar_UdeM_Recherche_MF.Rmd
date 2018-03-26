@@ -1,0 +1,1733 @@
+---
+author: Sahir Bhatnagar, candidat au doctorat, Biostatistique, Université de McGill
+title: "Miser sur la sparsité"
+subtitle: 
+date: "En collaboration avec Karim Oualkacha, Yi Yang et Celia Greenwood"
+output:
+  beamer_presentation:
+    keep_tex: yes
+    theme: metropolis
+    latex_engine: xelatex
+    slide_level: 2
+    incremental: yes
+    includes:
+      in_header: /home/sahir/Dropbox/jobs/hec/talk/header.tex
+fontsize: 12pt
+classoption: compress
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r,setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(cache=TRUE, message = FALSE, tidy = FALSE)
+pacman::p_load(cowplot)
+pacman::p_load(sjPlot)
+```
+
+
+# Introduction
+
+## Mon cheminement
+
+\begin{itemize}
+\item 2008: Baccalaur\'eat en actuariat (Concordia) \pause
+\item 2009: Aon Hewitt - R\'egimes de retraite \pause
+\item 2010: Associ\'e de la Soci\'et\'e des Actuaires (ASA) \pause
+\item 2012: Ma\^itrise en Biostatistique (Queen's)\pause
+\item 2013: Doctorat en Biostatistique (McGill, dipl\^ome pr\'evu mai 2018)\pause
+\item 2016: Wellcome Trust Sanger Institute (Cambridge)\pause
+\item 2017: Charg\'{e} de cours th\'{e}orie des probabilit\'{e}s et l'inf\'{e}rence statistique (McGill)\pause
+\item 2017: Consultation en statistiques avec des chercheurs au CHUM, l'Hôpital juif, CUSM \pause
+\item sahirbhatnagar.com
+\end{itemize}
+
+
+
+## Aperçu
+
+\begin{enumerate}
+\item Un exemple justificatif \pause
+\item Contexte sur les méthodes de pénalisation lasso et groupe lasso \pause
+\item Portrait global de mes paquets R \pause
+\item Présentation de deux de nos méthodes de pénalisation: \texttt{sail} et \texttt{ggmix}
+\end{enumerate}
+
+
+# Miser sur la sparsité 
+
+
+## Miser sur la sparsité 
+
+\begin{center}
+\resizebox{225pt}{!}{
+\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
+			\tikzstyle{every pin edge}=[<-,shorten <=1pt]
+		    \tikzstyle{net node} = [circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=orange!100!cyan];
+			\tikzstyle{neuron}=[circle,fill=black!25,minimum size=17pt,inner sep=0pt]
+			\tikzstyle{input neuron}=[neuron, fill=green!50];
+			\tikzstyle{output neuron}=[neuron, fill=red!50];
+			\tikzstyle{hidden neuron}=[neuron, fill=blue!50];
+			\tikzstyle{annot} = [text width=4em, text centered]
+
+		\node[draw=white,circle,minimum size=30mm,inner sep=0pt,fill=white, name=response2] at (0:0) {$Y$};
+		\node[draw,circle,minimum size=15mm,fill=darktangerine, name=response] at (0:0) {\Huge $Y$};
+		\foreach [count=\i] \a in {0, 5,...,359} 
+		{
+		\pgfmathsetmacro\k{mod(\i+\i-1,60)*1}  
+		\node[draw,circle,inner sep=0pt,minimum size=1pt,fill=myblue!\k!white, name=c\i] at (\a: 7.5) {$X_{\i}$};
+		\draw[color = gray, thin, ->, >=stealth'] (c\i) -- (response2);
+		}
+		\pause
+		\foreach [count=\i] \f in {72,31,62,60} 
+		{
+		\draw[color = red, line width=0.75mm, ->, >=stealth'] (c\f) -- (response2);
+		}
+		\end{tikzpicture}
+}
+\end{center}
+
+
+## Miser sur la sparsité
+
+\large{\textbf{Utilisez une procédure qui fonctionne bien pour les problèmes sparse, car aucune procédure ne fonctionne bien pour les problèmes denses.}}[^27]
+
+\pause 
+
+\normalsize
+\begin{itemize}
+\item Un modèle statistique sparse est un modèle pour lequel seulement un petit nombre de variables explicatives jouent un rôle important.
+\item Hypothèse de parcimonie: peu de variables sont pertinentes pour les données de grande dimension ($N << p$).
+\item $\boldsymbol{\beta}$ est ``\alert{creux}''
+\item Les modèles sparse peuvent être plus rapides à calculer, plus faciles à comprendre et produire des prédictions plus stables.
+\end{itemize}
+
+
+[^27]:\scriptsize{The elements of statistical learning. Springer series in statistics, 2001.}
+
+
+
+
+# Un exemple justificatif
+
+
+## Variables explicatives du salaire dans la LNH[^30]
+
+
+\centering
+\includegraphics[scale = 0.6]{predictors-crop}
+
+
+[^30]:\scriptsize{https://www.kaggle.com/camnugent/nhl-salary-data-prediction-cleaning-and-modelling}
+
+
+
+## Apprentissage supervisé
+
+\begin{itemize}
+\item Apprendre la fonction $f$
+\end{itemize}
+
+\begin{center}
+\includegraphics[scale = 0.5]{hec}
+\end{center}
+
+
+
+<!--
+## Variables explicatives du salaire des joeurs de la LNH
+
+
+%\framedgraphic{all_hockey}
+
+
+## Variables explicatives du salaire des joeurs de la LNH
+
+
+%\framedgraphic{all_hockey2}
+-->
+
+
+## Coefficients des moindres carrés ordinaires (MCO) et lasso
+
+\centering
+\includegraphics[width=\textwidth]{mco_vs_lasso}
+
+
+
+
+## Variables explicatives sélectionnées par le lasso
+
+\centering
+\includegraphics[width=\textwidth]{hockey-model}
+
+## Contexte de la méthode lasso 
+
+\begin{itemize}
+\item Variables explicatives: $x_{ij}$, $j=1, \ldots, p$, variable réponse: $y_i$, $i=1, \ldots, n$ 
+\item Supposons que les $x_{ij}$ sont standardisés $\to$ $\sum_i x_{ij}/n = 0$ et $\sum_i x_{ij}^2=1$. \pause La fonction de perte du lasso$^1$ est: 
+\begin{align*}
+\widehat{\boldsymbol{\beta}}^{lasso} & = \argmin_{\beta} \frac{1}{2} \sum_{i=1}^{n} \left( y_i - \sum_{j=1}^p x_{ij}\beta_j \right)^2 \\
+sujet\,\,\textrm{à}\,\,\,\, & \sum_{j=1}^p |\beta_j| \leq \textcolor{red}{s}, \qquad s > 0
+\end{align*}
+\pause \item La version de Lagrange du problème, pour $\lambda>0$
+\begin{align*}
+\widehat{\boldsymbol{\beta}}^{lasso} & = \argmin_{\beta} \frac{1}{2} \sum_{i=1}^{n} \left( y_i - \sum_{j=1}^p x_{ij}\beta_j \right)^2  + \textcolor{red}{\lambda} \sum_{j=1}^p |\beta_j|
+\end{align*}
+\end{itemize}
+
+\footnotetext[1]{\scriptsize{Tibshirani. JRSSB (1996)}}
+
+## La solution du lasso
+
+\begin{itemize}
+\item Considérez une variable explicative et une variable réponse: $\lbrace(x_i,y_i) \rbrace_{i=1}^n$. La fonction de perte du lasso est:
+\begin{align}
+\widehat{\beta}^{lasso} & = \argmin_{\beta} \frac{1}{2} \sum_{i=1}^{n} \left( y_i - x_{i}\beta \right)^2  + \lambda |\beta| \label{eq:lassoone}
+\end{align}
+\item Si la variable explicative est \alert{standardisée}, la solution du lasso \eqref{eq:lassoone} est une fonction de l'estimateur MCO $\widehat{\beta}^{LS}$  
+\begin{align*}
+\widehat{\beta}^{lasso} & = S_{\lambda}\left( \widehat{\beta}^{MCO} \right)= \textrm{sign}\left( \widehat{\beta}^{MCO} \right) \left( |\widehat{\beta}^{MCO}| - \lambda \right)_{+} \\  
+& = \begin{cases} \widehat{\beta}^{MCO} - \lambda, &  \widehat{\beta}^{MCO} > \lambda \\
+0 & |\widehat{\beta}^{MCO}|  \leq \lambda \\
+\widehat{\beta}^{MCO} + \lambda & \widehat{\beta}^{MCO} \leq -\lambda \\
+\end{cases}
+\end{align*}
+\end{itemize}
+
+
+## La solution du lasso en fonction de l'estimateur MCO
+
+\begin{itemize}
+\item Lorsque la variable explicative est \alert{standardisée}, le lasso \textbf{va réduire la solution MCO vers zéro} par le facteur $\lambda$
+\end{itemize}
+
+\centering
+\includegraphics[scale=0.25]{soft.png}
+
+\footnotetext[1]{\scriptsize{Hastie et al. Statistical learning with sparsity: the lasso and generalizations. CRC press, (2015).}}
+
+
+
+## Choisir la complexité du modèle
+
+\begin{center}
+\animategraphics[controls,scale=0.3]{1}{/home/sahir/Dropbox/yi_yang/lasso_animation/plots/path_}{1}{100}
+\end{center}
+
+
+
+## Le lasso pour des groupes de variables explicatives
+
+\vspace*{-0.15cm}
+L'estimateur du \textbf{groupe lasso} est: 
+\[
+\underset{(\beta_{0},\boldsymbol{\beta})}{\min}\frac{1}{2}\left\Vert \mathbf{y}-\beta_{0}-\mathbf{X}\boldsymbol{\beta}\right\Vert _{2}^{2}+\lambda\sum_{k=1}^{K}\sqrt{p_{k}}\Vert\boldsymbol{\beta}^{(k)}\Vert_{2}\qquad p_{k}-\mathrm{taille\ de\ group}
+\]
+
+\vspace*{-0.25cm}
+
+\begin{figure}
+		\centering
+\hspace*{-0.50cm}
+		\subfloat[Lasso \label{fig:1}]{
+			\resizebox{165pt}{!}{
+				\begin{tikzpicture}[inner sep=0.2cm]
+				\def \radi{4}
+				\def \x{3}
+				\def \y{3}
+				\def \z{3}
+				
+				\begin{scope}[isometricYXZ]
+				% the grid
+				\begin{scope}[color=gray!50, thin]
+				\foreach \xi in {0,...,\radi}{ \draw (\xi,\radi,0) -- (\xi,0,0) -- (\xi,0,\radi); }%
+				\foreach \yi in {1,...,\radi}{ \draw (0,\yi,\radi) -- (0,\yi,0) -- (\radi,\yi,0); }%
+				\foreach \zi in {0,...,\radi}{ \draw (0,\radi,\zi) -- (0,0,\zi) -- (\radi,0,\zi); }%
+				\end{scope}
+				
+				\draw[-latex, ultra thick, color=blue] (0,0,0) -- (5,0,0) node[anchor=west] {\Large linéaire};%
+				\draw[-latex, ultra thick, color=red] (0,0,0) -- (0,5,0) node[anchor=north] {\Large quadratique};%
+				\draw[-latex, ultra thick, color=black] (0,0,0) -- (0,0,5) node[anchor=east] {\Large solde d'une carte de crédit};%
+				
+				\fill[color=magenta, opacity=0.2] (0,0,0) -- (\x,0,0) -- (\x,\y,0) -- (0,\y,0) -- cycle; %
+				\fill[color=yellow, opacity=0.2] (0,0,0) -- (0,0,\z) -- (0,\y,\z) -- (0,\y,0) -- cycle; %
+				\fill[color=cyan, opacity=0.2] (0,0,0) -- (\x,0,0) -- (\x,0,\z) -- (0,0,\z) -- cycle;
+				
+				\draw[color=gray, thick]%
+				(0,\y,\z) -- (\x,\y,\z) -- (\x,\y,0) (\x,\y,\z) -- (\x,0,\z);%
+				\end{scope}
+				
+				%\shade[ball color=yellow] ($\y*(-1.299cm,-0.75cm)+(\x,\z)$) circle (0.1);%
+				\node[circle, minimum width=1cm, inner sep=0pt, outer sep=0pt, ball color=blue!20!white,opacity=0.90] (H-1) at ($\y*(-1.299cm,-0.75cm)+(0,\z)$) {\large \bfseries age};
+				\node[circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=blue!50!green!20!white,opacity=.9] (H-1) at (0,0,0) {\bfseries poids};
+				\end{tikzpicture}
+			}
+			}
+		\subfloat[Groupe lasso \label{fig:2}]{
+			\resizebox{165pt}{!}{
+							\begin{tikzpicture}[inner sep=0.2cm]
+							\def \radi{4}
+							\def \x{3}
+							\def \y{3}
+							\def \z{3}
+							
+							\begin{scope}[isometricYXZ]
+							% the grid
+							\begin{scope}[color=gray!50, thin]
+							\foreach \xi in {0,...,\radi}{ \draw (\xi,\radi,0) -- (\xi,0,0) -- (\xi,0,\radi); }%
+							\foreach \yi in {1,...,\radi}{ \draw (0,\yi,\radi) -- (0,\yi,0) -- (\radi,\yi,0); }%
+							\foreach \zi in {0,...,\radi}{ \draw (0,\radi,\zi) -- (0,0,\zi) -- (\radi,0,\zi); }%
+							\end{scope}
+							
+							\draw[-latex, ultra thick, color=blue] (0,0,0) -- (5,0,0) node[anchor=west] {\Large linéaire};%
+							\draw[-latex, ultra thick, color=red] (0,0,0) -- (0,5,0) node[anchor=north] {\Large quadratique};%
+							\draw[-latex, ultra thick, color=black] (0,0,0) -- (0,0,5) node[anchor=east] {\Large solde d'une carte de crédit};%
+							
+							\fill[color=magenta, opacity=0.2] (0,0,0) -- (\x,0,0) -- (\x,\y,0) -- (0,\y,0) -- cycle; %
+							\fill[color=yellow, opacity=0.2] (0,0,0) -- (0,0,\z) -- (0,\y,\z) -- (0,\y,0) -- cycle; %
+							\fill[color=cyan, opacity=0.2] (0,0,0) -- (\x,0,0) -- (\x,0,\z) -- (0,0,\z) -- cycle;
+							
+							\draw[color=gray, thick]%
+							(0,\y,\z) -- (\x,\y,\z) -- (\x,\y,0) (\x,\y,\z) -- (\x,0,\z);%
+							\end{scope}
+							
+							%\shade[ball color=yellow] ($\y*(-1.299cm,-0.75cm)+(\x,\z)$) circle (0.1);%
+							\node[circle, minimum width=1cm, inner sep=0pt, outer sep=0pt, ball color=blue!20!white,opacity=0.90] (H-1) at ($\y*(-1.299cm,-0.75cm)+(\x,\z)$) {\large \bfseries age};
+							\node[circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=blue!50!green!20!white,opacity=.9] (H-1) at (0,0,0) {\bfseries poids};
+							\end{tikzpicture}
+						}
+			
+			}
+		%\caption{Caption.}
+		\label{fig:caption}
+\end{figure}
+
+
+# Nos logiciels
+
+## Un aperçu de nos paquets R
+
+\begin{itemize}
+\item \textbf{\footnotesize{}\texttt{eclust}}{\footnotesize{} \textendash{} Bhatnagar et al. (2017, Genetic Epidemiology)}\\
+{\footnotesize{}\url{https://cran.r-project.org/package=eclust}}{\footnotesize \par}
+\item \textbf{\footnotesize{}\texttt{sail}}{\footnotesize{} \textendash{} Bhatnagar, Yang and Greenwood
+(2017+, preprint)}\\
+{\footnotesize{}\url{https://github.com/sahirbhatnagar/sail}}{\footnotesize \par}
+\item \textbf{\footnotesize{}\texttt{ggmix}}{\footnotesize{} \textendash{} Bhatnagar, Oualkacha, Yang, Greenwood (2017+, preprint)}\\
+{\footnotesize{}\url{https://github.com/sahirbhatnagar/ggmix}}{\footnotesize \par}
+\item \textbf{\footnotesize{}\texttt{casebase}}{\footnotesize{} \textendash{} Bhatnagar$^1$, Turgeon$^1$, Yang, Hanley and Saarela (2017+, preprint)}\\
+{\footnotesize{}\url{https://cran.r-project.org/package=casebase}}{\footnotesize \par}
+\end{itemize}
+
+\footnotetext[1]{\scriptsize{co-auteurs}}
+
+
+
+
+
+
+## Un aperçu de nos paquets R
+
+\vspace*{-0.25cm}
+\ctable[pos=h!,doinside=\footnotesize]{lcccc}{
+}{
+\FL
+     & \textbf{\texttt{eclust}}   & \textbf{\texttt{sail}} & \textbf{\texttt{ggmix}} & \textbf{\texttt{casebase}} \ML
+\multicolumn{1}{m{2cm}}{\textbf{Modèle}}     \\
+\rowcolor{whitesmoke}
+\hspace*{0.4cm}Moindres carrés & \cmark & \cmark & \cmark &  \\
+\hspace*{0.4cm}Classification binaire & \cmark &     &    &  \\ 
+\hspace*{0.4cm}Analyse de survie &    &     &    & \cmark \ML
+\multicolumn{1}{m{2cm}}{\textbf{Penalité}}     \\
+\rowcolor{whitesmoke}
+\hspace*{0.4cm}Ridge 		& \cmark &    		& \cmark & \cmark \\
+\hspace*{0.4cm}Lasso 		& \cmark & \cmark	& \cmark   & \cmark \\
+\rowcolor{whitesmoke}
+\hspace*{0.4cm}Elastic Net & \cmark &     		& \cmark   & \cmark \\
+\hspace*{0.4cm}Group Lasso &  &  \cmark  & \cmark   &  \ML
+\multicolumn{1}{m{2cm}}{\textbf{Particularité}} & \\
+\rowcolor{whitesmoke}
+\hspace*{0.4cm}Interactions & \cmark & \cmark		&    & \cmark \\
+\hspace*{0.4cm}Modélisation flexible & \cmark &  \cmark   		&    & \cmark \\
+\rowcolor{whitesmoke}
+\hspace*{0.4cm}Effets aléatoires & 		 &     		& \cmark   &  \ML
+\multicolumn{1}{m{2cm}}{\textbf{Données}} & $(x,y,e)$ & $(x,y,e)$ & $(x,y,\boldsymbol{\Psi})$ & $(x,t,\delta)$ \LL
+}
+
+
+
+
+# \texttt{sail}: L'apprentissage des interactions non-linéaires ayant la propriété d'hérédité forte
+
+## Motivation 1: La propriété d'hérédité forte
+\small
+\vspace*{-0.35cm}
+$$  
+Y =  \beta_0 \cdot \mathbf{1} + \sum_{j=1}^p \beta_j X_{j} + \beta_E X_E  + \sum_{j=1}^p \textcolor{red}{\alpha_j} X_E X_j + \varepsilon
+$$
+\pause 
+\vspace*{-0.15cm}
+
+\begin{alertblock}{La propriété d'hérédité forte$^1$}
+$$
+\hat{\alpha}_{j} \neq 0 \qquad \Rightarrow \qquad \hat{\beta}_j \neq 0 \qquad \textrm{et} \qquad \hat{\beta}_E \neq 0  
+$$
+\end{alertblock}
+
+\vspace*{-0.15cm}
+
+\begin{exampleblock}{la propriété d'hérédité faible$^1$}
+$$
+\hat{\alpha}_{j} \neq 0 \qquad \Rightarrow \qquad \hat{\beta}_j \neq 0 \qquad \textrm{ou} \qquad \hat{\beta}_E \neq 0  
+$$
+\end{exampleblock}
+
+\vspace*{-0.35cm}
+
+\begin{itemize}
+\item La propriété d'hérédité forte est utile pour \textbf{l'interprétation}$^2$.
+\item Les grands effets principaux sont plus susceptibles d'entraîner des interactions modestes$^3$.
+\end{itemize}
+
+
+\footnotetext[1]{\scriptsize{Chipman. Canadian Journal of Statistics (1996)}}
+\footnotetext[2]{\scriptsize{McCullagh and Nelder. Generalized Linear Models (1983)}}
+\footnotetext[3]{\scriptsize{Cox. International Statistical Review (1984)}}
+
+
+## Motivation 2: Interactions non-linéaires
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{non_linear_example}
+\end{figure}
+
+
+
+
+
+## Le lasso avec des interactions
+
+\begin{itemize}
+\item $Y \rightarrow$ variable réponse
+\item $X_E \rightarrow$ environnement
+\item $X_j \rightarrow$ variables fixes, $j=1, \ldots, p$
+\end{itemize}
+
+$$  
+Y =  \beta_0 \cdot \mathbf{1} + \sum_{j=1}^p \beta_j X_{j} + \beta_E X_E  + \sum_{j=1}^p \alpha_j X_E X_j + \varepsilon
+$$
+
+
+$$
+\underset{\beta_0, \boldsymbol{\beta}, \boldsymbol{\alpha} }{\mathrm{argmin}} \quad  \mathcal{L}(Y;\boldsymbol{\Theta}) + \textcolor{red}{\lambda (\lVert \boldsymbol{\beta} \rVert_1 + \lVert \boldsymbol{\alpha} \rVert_1)} 
+$$
+
+
+
+
+
+
+##  Modèles ayant la propriété d'hérédité forte: état actuel de la recherche
+
+```{r, eval=FALSE, echo=FALSE}
+model <- c("CAP (Zhao et al. 2009)","SHIM (Choi et al. 2009)", "hiernet (Bien et al. 2013)", "GRESH (She and Jiang 2014)", "FAMILY (Haris et al. 2014)", "glinternet (Lim and Hastie 2015)", "RAMP (Hao et al. 2016)","VANISH (Radchenko and James 2010)")
+type <- c(rep("Linéaire"), "Non-linéaire")
+```
+
+\ctable[pos=h!,doinside=\footnotesize]{lcc}{
+	}{
+	\FL
+	Particularité      & Modèle   & Logiciel \ML
+	\multicolumn{1}{m{1cm}}{Linéaire}    & \multicolumn{1}{m{6cm}}{\texttt{CAP} (Zhao et al. 2009, \emph{Ann. Stat})}        &   \xmark    \\
+ & \multicolumn{1}{m{6cm}}{\texttt{SHIM} (Choi et al. 2009, \emph{JASA})}        &   \xmark    \\
+ 	& \multicolumn{1}{m{6cm}}{\texttt{hiernet} (Bien et al. 2013, \emph{Ann. Stat})}        &   \texttt{hierNet(x, y)}    \\
+ 	& \multicolumn{1}{m{6cm}}{\texttt{GRESH} (She and Jiang 2014, \emph{JASA})}        &  \xmark     \\
+ 	& \multicolumn{1}{m{6cm}}{\texttt{FAMILY} (Haris et al. 2014, \emph{JCGS})}    &  \texttt{FAMILY(x, z, y)}   \\
+ 	& \multicolumn{1}{m{6cm}}{\texttt{glinternet} (Lim and Hastie 2015, \emph{JCGS})}    & \texttt{glinternet(x, y)}  \\			   	 	& \multicolumn{1}{m{6cm}}{\texttt{RAMP} (Hao et al. 2016, \emph{JASA})}        & \texttt{RAMP(x, y)}   \ML
+	\multicolumn{1}{m{1cm}}{Non-linéaire} 	& \multicolumn{1}{m{6cm}}{\texttt{VANISH} (Radchenko and James 2010, \emph{JASA})}        & \xmark  \\
+ 	& \multicolumn{1}{m{6cm}}{\texttt{sail} (Bhatnagar et al. 2017+)}        & \texttt{sail(x, e, y)}  \LL
+	}
+
+
+## Notre contribution pour les effets non-linéaires
+\vspace*{-.3cm}
+On considère l'expansion avec des splines:
+
+$$
+f_j(X_j) = \sum_{\ell = 1}^{p_j} \psi_{j\ell}(X_j) \beta_{j\ell} 
+$$
+
+\[
+f(X_1) =
+  \underbrace{\begin{bmatrix}
+    \psi_{11}(X_{11}) & \psi_{12}(X_{12}) & \cdots & \psi_{11}(X_{15}) \\
+    \vdots & \vdots & \cdots & \vdots \\
+        \vdots & \vdots & \cdots & \vdots \\
+            \psi_{11}(X_{i1}) & \psi_{12}(X_{i2}) & \cdots & \psi_{11}(X_{i5}) \\
+            \vdots & \vdots & \cdots & \vdots \\
+                        \vdots & \vdots & \cdots & \vdots \\
+    \psi_{11}(X_{N1}) & \psi_{12}(X_{N2}) & \cdots & \psi_{11}(X_{N5}) \\
+  \end{bmatrix}_{N \times 5}}_{\boldsymbol{\Psi_1}} \quad \times \quad \underbrace{\begin{bmatrix}
+  \beta_{11}\\
+  \beta_{12}\\
+  \beta_{13}\\
+  \beta_{14}\\
+  \beta_{15}
+  \end{bmatrix}_{5 \times 1}}_{\theta_1}
+\]
+
+
+## \texttt{sail}: Interactions non-linéaires
+
+\begin{itemize}
+\item $ \theta_j = (\beta_{j1}, \ldots, \beta_{jp_j}) \in \mathbb{R}^{p_j} $
+\item $ \alpha_j = (\alpha_{j1}, \ldots, \alpha_{jp_j})\in \mathbb{R}^{p_j} $
+\item  $ \boldsymbol{\Psi}_j \rightarrow n \times p_j $ matrices de $ \psi_{j\ell} $
+\item En pratique, on utilise des \texttt{bsplines} avec 5 degrés de liberté.
+\end{itemize}
+
+\begin{exampleblock}{Modèle}
+$$
+Y  =  \beta_0 \cdot \boldsymbol{1} + \sum_{j=1}^p \boldsymbol{\Psi}_j \theta_j + \beta_E X_E + \sum_{j=1}^p X_E \boldsymbol{\Psi}_j \alpha_{j}  + \varepsilon 
+$$
+\end{exampleblock}
+
+
+
+## \texttt{sail}: Propriété d'hérédité forte
+
+\begin{exampleblock}{Reparamétrisation$^1$}
+$$
+\alpha_{j} = \gamma_{j}  \beta_E \theta_j
+$$
+\end{exampleblock}
+
+
+
+\begin{alertblock}{Modèle}
+$$
+Y  =  \beta_0 \cdot \boldsymbol{1} + \sum_{j=1}^p \bPsi_j \theta_j + \beta_E X_E + \sum_{j=1}^p \textcolor{red}{\gamma_{j}  \beta_E X_E \bPsi_j \theta_j} + \varepsilon
+$$
+\end{alertblock}
+
+
+
+
+
+\begin{exampleblock}{Fonction de perte}
+$$
+\underset{\beta_E, \boldsymbol{\theta}, \boldsymbol{\gamma} }{\mathrm{argmin}} \quad \mathcal{L}(Y;\boldsymbol{\Theta}) + \lambda_\beta  \left( w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right) +  \lambda_\gamma \sum_{j=1}^{p} w_{jE} |\gamma_{j}| 
+$$
+\end{exampleblock}
+
+\footnotetext[1]{\scriptsize{Choi et al. JASA (2010)}}
+
+
+
+# Algorithme
+
+## Block Relaxation (De Leeuw, 1994)
+
+\begin{algorithm}[H]
+	\SetAlgoLined
+	%	\KwResult{Write here the result }
+	Définir le compteur d'itération $k \leftarrow 0$, valeurs initiales $\bTheta^{(0)}$\;
+	\For{ pour chaque paire ($\lambda_\beta, \lambda_\gamma$)}{
+	\Repeat{à la convergence}{
+		\begin{align*}
+			\bgamma^{(k+1)} &\leftarrow \underset{\bgamma }{\mathrm{argmin}} \quad Q_{\lambda_\beta, \lambda_\gamma}\left(\boldsymbol{\gamma},\beta_E^{(k)}, \boldsymbol{\theta}^{(k)}\right) \\
+		\btheta^{(k+1)} &\leftarrow \underset{\boldsymbol{\btheta} }{\mathrm{argmin}} \quad Q_{\lambda_\beta, \lambda_\gamma} \left(\btheta, \beta_E^{(k)}, \bgamma^{(k+1)}\right)\\
+		\beta_E^{(k+1)} &\leftarrow \underset{\boldsymbol{\beta_E} }{\mathrm{argmin}} \quad Q_{\lambda_\beta, \lambda_\gamma} \left(\btheta^{(k+1)}, \beta_E, \bgamma^{(k+1)}\right)
+		\end{align*}
+
+$k \leftarrow k +1$
+}
+}
+\caption{Block Relaxation Algorithm} \label{alg:cgd2}
+\end{algorithm}
+
+
+## Implémentation
+
+\begin{alertblock}{Fonction de perte}
+$$
+\underset{\beta_E, \boldsymbol{\theta}, \boldsymbol{\gamma} }{\mathrm{argmin}} \quad \mathcal{L}(Y;\boldsymbol{\Theta}) + \lambda_\beta  \left( w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right) +  \lambda_\gamma \sum_{j=1}^{p} w_{jE} |\gamma_{j}| 
+$$
+\end{alertblock}
+
+\pause
+
+\begin{exampleblock}{Un lasso modifié}
+$$
+\underset{\boldsymbol{\gamma} }{\mathrm{argmin}} \quad \mathcal{L}(Y;\boldsymbol{\Theta}) + \textcolor{lightgray}{\lambda_\beta  \left( w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right)} +  \lambda_\gamma \sum_{j=1}^{p} w_{jE} |\gamma_{j}| 
+$$
+\end{exampleblock}
+
+
+\footnotetext[1]{\scriptsize{https://github.com/sahirbhatnagar/sail}}
+
+
+
+## Implémentation
+
+\begin{alertblock}{Fonction de perte}
+$$
+\underset{\beta_E, \boldsymbol{\theta}, \boldsymbol{\gamma} }{\mathrm{argmin}} \quad \mathcal{L}(Y;\boldsymbol{\Theta}) + \lambda_\beta  \left( w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right) +  \lambda_\gamma \sum_{j=1}^{p} w_{jE} |\gamma_{j}| 
+$$
+\end{alertblock}
+
+\pause
+
+\begin{exampleblock}{Un groupe lasso modifié}
+$$
+\underset{\beta_E, \boldsymbol{\theta} }{\mathrm{argmin}} \quad \mathcal{L}(Y;\boldsymbol{\Theta}) + \lambda_\beta  \left( w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right) +  \textcolor{lightgray}{\lambda_\gamma \sum_{j=1}^{p} w_{jE} |\gamma_{j}|} 
+$$
+\end{exampleblock}
+
+
+\footnotetext[1]{\scriptsize{https://github.com/sahirbhatnagar/sail}}
+
+
+# Simulations
+
+## Scénarios de simulations 
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+  \textbf{Scénario 1: \textcolor{blue}{<<facile>>}}
+\begin{itemize}
+\item $ Y = \sum_{j=1}^5 f(X_j) + X_E + E \times (f(X_1) + f(X_2)) $
+\item $f(\cdot) \rightarrow$ B-splines avec 5 degrés de liberté
+\item $\theta_j \sim \mathcal{N}(0,1)$
+\item $N=200, p=25$
+\item $25 \times 5 \times 2 + 1 = 251$ paramètres à estimer
+\end{itemize}
+\end{column}
+\begin{column}{0.5\textwidth}  %%<--- here
+     \textbf{Scénario 2: \textcolor{red}{<<difficile>>}}
+\begin{itemize}
+\item $ Y = \sum_{j=1}^4 f(X_j) + X_E + E  \times  (f(X_3) + f(X_4)) $
+\item $f(X_1) \rightarrow$ linéaire 
+\item $f(X_2) \rightarrow$ quadratique 
+\item $f(X_3) \rightarrow$ sinusoïdal 
+\item $f(X_4) \rightarrow$ sinusoïdal compliqué
+\item $N=200, p=25$
+\end{itemize}
+\end{column}
+\end{columns}
+
+## Erreur quadratique moyenne (25 simulations)
+
+<!--
+%\vspace*{-0.4cm}
+%\begin{itemize}
+%\item \footnotesize{Même matrice d'expérience pour le lasso ($\mathbf{X} \in \mathbb{R}^{200 \times 251}$)}
+%\end{itemize}
+-->
+
+\includegraphics[width=\textwidth]{easy_hard_sim_rmse.pdf}
+
+
+<!--
+## Taux des vrais et des faux positifs
+
+%\vspace*{-0.4cm}
+
+%\framedgraphic{easy_sim_tpr_fpr.pdf}
+-->
+
+## Scénario 1: Les effets principaux
+
+\vspace*{-0.4cm}
+
+\framedgraphic{gendata_main_eff.pdf}
+
+## Scénario 1: Les interactions
+
+\framedgraphic{gendata_inter_X1.pdf}
+
+
+## Scénario 2: Les effets principaux
+
+\framedgraphic{gendata2_main_eff.pdf}
+
+<!--
+## Scénario 2: Les interactions
+
+%\framedgraphic{gendata2_inter_X3.pdf}
+-->
+
+## Scénario 2: Les interactions
+
+\framedgraphic{gendata2_inter_X4.pdf}
+
+
+
+## \texttt{sail} paquet R: résultats de la validation croisée
+
+```{r, eval=FALSE, echo=TRUE}
+sail::plot(cvfit)
+```
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth,height=0.75\textheight,keepaspectratio]{gendata_cvfit.pdf}
+\end{figure}
+
+
+# Résultats sur un vrai jeux de données
+
+
+## La maladie d'Alzheimer
+
+\small
+
+\vspace*{-0.4cm}
+\begin{itemize}
+\item En 2016, il y a environ \textbf{564 000 Canadiens} atteints de la maladie d'Alzheimer ou d'une maladie apparentée.
+\item À peu près 25 000 nouveaux cas chaque année.
+\item Selon les prévisions, il y en aura \textbf{937 000} d'ici 2031, soit une augmentation de 66 \%.
+\item Les coûts totaux du système de soins de santé et ceux à la charge des aidants se chiffrent à un montant estimatif de \textbf{10,4 milliards de dollars par an}. 
+\item D'ici à 2031, ce chiffre augmentera de 60 \% pour atteindre \textbf{16,6 milliards} de dollars.
+\end{itemize}
+
+
+\footnotetext[1]{\scriptsize{http://www.alzheimer.ca/fr/Home/Get-involved/Advocacy/Latest-info-stats}}
+
+
+## Interaction entre la bêta-amyloïde et le gène APOE
+
+\begin{itemize}
+\item La présence de bêta-amyloïde sont les signes caractéristiques de la maladie d'Alzheimer.
+\item Il existe une corrélation important entre le gène APOE et la maladie d'Alzheimer.
+\end{itemize}
+
+\framedgraphic{AZ_pic_crop}
+
+
+## \texttt{sail}: Les coefficients non-zéros
+\vspace*{-0.35cm}
+
+\centering
+\includegraphics[width=\textwidth]{apoe_interactions_sail_coefs}
+
+
+
+
+## \texttt{sail}: Interactions avec la région \texttt{supramarginal gyrus}
+
+\centering
+\includegraphics[width=\textwidth]{apoe_interactions_mmscore_amy_beta_supramarginal_gyrus_right}
+
+
+## \texttt{lasso}: Les coefficients non-zéros
+\vspace*{-0.35cm}
+
+\centering
+\includegraphics[width=\textwidth]{apoe_interactions_lasso_coefs}
+
+
+## Comparaison des coefficients: \texttt{sail} vs. \texttt{lasso}
+
+\includegraphics[width=0.5\textwidth]{apoe_interactions_sail_coefs}
+\hfill
+\includegraphics[width=0.5\textwidth]{apoe_interactions_lasso_coefs}
+
+
+## Erreur quadratique moyenne de la validation croisée
+
+\centering
+\framedgraphic{apoe_interactions_5foldcv_mse_with_lasso_cropped}
+
+
+
+# \texttt{ggmix}: Les modèles mixtes avec le groupe lasso
+
+## Un jeu de données justificatif: UK Biobank
+
+\begin{itemize}
+\item \textbf{500,000 individus}, au-delà de \textbf{40 millions de variables explicatives}.  
+\item Grand nombre de variables réponses (ex. maladie, densité minérale osseuse).
+\item \textcolor{red}{\textbf{Objectif:}} \textbf{Quelles variables explicatives sont associées à la variable réponse?}
+\end{itemize}
+
+
+\framedgraphic{ukb}
+
+
+## Un jeu de données justificatif: Deux problèmes
+
+\framedgraphic{ukbtable1.pdf}
+
+
+## 1: Des groupes de variables peuvent affecter la variable réponse
+
+\framedgraphic{ukbtable2.pdf}
+
+
+
+
+## 2: Les individus sont liés
+
+\begin{itemize}
+\item Les observations sont corrélées, mais cette relation est inconnue.
+\item Cependant, elle peut être estimée à partir des données.
+\end{itemize}
+
+\vspace*{-0.30cm}
+
+\framedgraphic{ukbtable3.pdf}
+
+
+## \texttt{ggmix}: Étude de simulation
+\small
+\vspace*{-0.35cm}
+\begin{figure}
+	\includegraphics[height=0.5\textheight]{tpr_fpr.pdf}
+	\caption{\scriptsize{Vrai positif vs faux positif (10 simulations). $N=1000, p=5000, p_{active} = 500$}}
+\end{figure}
+\vspace*{-.3cm}
+\scriptsize
+\begin{table}
+
+\vspace*{-0.35cm}
+\centering
+\begin{tabular}[t]{cc|c}
+		\hline
+		\textbf{Lasso} & & \textbf{ggmix} \\
+		\hline
+ 32.8 (0.87) & & 26.7 (1.06) \\
+		\hline
+	\end{tabular}
+\caption{Erreur quadratique moyenne (écart-type)}
+\end{table}
+
+
+
+## Les données
+
+\begin{itemize}
+	\item Variable résponse: \mbox{$\bY = (y_1, \ldots, y_n) \in \mathbb{R}^{n}$}
+	\item Variables explicatives: \mbox{$\bX = (\bX_1, \ldots, \bX_n)^T \in \mathbb{R}^{n \times p}$}, où $p \gg n$
+	\item Matrices de similarité: $\bPhi  \in \mathbb{R}^{n \times n}$
+	\item Coefficients: $\bbeta = (\beta_1, \ldots, \beta_p)^T \in \mathbb{R}^{p}$ 
+	\item Effet aléatoire: $\bb = (b_1, \ldots, b_n) \in \mathbb{R}^{n}$ 
+	\item Erreur: \mbox{$\be = (\varepsilon_1, \ldots, \varepsilon_n) \in \mathbb{R}^{n}$} \pause
+	%\item Nous considérons le modèle linéaire mixte à un effet aléatoire suivant: 
+\begin{align} 
+\bY &= \bX \bbeta + \bb + \be \\  
+\bb \sim \mathcal{N}(0, \eta \sigma^2 \bPhi) & \qquad \be \sim \mathcal{N}(0, (1-\eta)\sigma^2 \bI) \nonumber
+\end{align}
+\vspace*{-0.35cm}
+\item $\sigma^2$ et $\eta \in [0,1]$ partagent la variance entre $\bb$ et $\be$
+\item $\bY | (\bbeta, \eta, \sigma^2) \sim \mathcal{N}(\bX \bbeta, \eta \sigma^2 \bPhi + (1-\eta)\sigma^2 \bI)$
+\end{itemize}
+
+<!--
+%\footnotetext[1]{\scriptsize{Pirinen et al. Annals of Applied Statistics (2013)}}
+-->
+
+<!--
+%\footnotetext[1]{\scriptsize{Lippert et al. Nature Methods (2011)}}
+-->
+
+## La fonction de vraisemblance
+
+\setlength{\leftmargini}{2.5em}
+\begin{itemize}
+\item Le log de la vraisemblance négative est donné par:
+\small{
+\begin{align*}
+		-\ell(\bTheta) & \propto \frac{n}{2}\log(\sigma^2) + \frac{1}{2}\log\left(\det(\bV)\right) + \frac{1}{2\sigma^2} \left(\bY - \bX \bbeta\right)^T \bV^{-1} \left(\bY - \bX \bbeta\right) 
+\end{align*}
+}
+où $\bV = \eta \bPhi + (1-\eta) \bI$ \mbox{}$^{1}$  \pause 
+\item Supposons que nous avons une matrice de rang inférieur $\mb{K} \in \mathbb{R}^{n\times k}$ ($k < n$), pour calculer la matrice de similarité factorisée $\bPhi = \mb{K}\mb{K}^T$ \pause
+\item Soit $\mb{K} = \mb{U} \bLambda \mb{V}^T$ la décomposition en valeurs singulières de $\mb{K}$, alors $$\bPhi = \mb{U}_1 \bLambda\bLambda\mb{U}_1^T = \mb{U}_1 \bSigma \mb{U}_1^T$$ où $\bU_1 \in \mathbb{R}^{n\times k}$ est la matrice composée des vecteurs propres correspondant au $k$ valeurs propres différentes de zéro.
+\end{itemize}
+
+\footnotetext[1]{\scriptsize{Pirinen et al. Annals of Applied Statistics (2013)}}
+
+
+## Estimateur de vraisemblance pénalisé
+
+
+\begin{itemize}
+\item Le log de la vraisemblance négative peut alors être exprimé
+\footnotesize
+\vspace*{-0.05cm}
+\begin{align*}
+\begin{split}
+&-\ell(\bTheta)  \propto \frac{n}{2}\log(\sigma^2) + \frac{1}{2} \left(  \sum_{i=1}^{k} \log(1 + \eta (\Sigma_i-1)) + (n-k) \log(1-\eta)\right) + \\
+&\frac{1}{2} \left\lbrace \left(\bY - \bX\bbeta \right)^T  \left[\frac{1}{\sigma^2(1-\eta)}\left(  \bI_{n} - \bU_1 \left(\frac{1-\eta}{\eta}\bSigma_1^{-1} + \bI_{k}\right) ^{-1}\bU_1^T \right)  \right] \left(\bY - \bX\bbeta \right)  \right\rbrace
+\end{split} \label{eq:loglikrowrank}
+\end{align*}
+\normalsize
+\pause
+\item Définir la fonction de perte:
+\begin{equation*}
+Q_{\lambda}(\bTheta) = -\ell(\bTheta) + \lambda \sum_{j}P_j(\beta_j)
+\end{equation*}
+\item $P_j(\cdot)$ est la pénalité sur les $\beta_1, \ldots, \beta_{p+1}$
+\item L'estimateur $\widehat{\bTheta}_{\lambda}$ est obtenu par
+\begin{equation*}
+\widehat{\bTheta}_{\lambda} = \argmin_{\bTheta} Q_{\lambda}(\bTheta) \label{eq:estimator}
+\end{equation*} 
+\end{itemize}
+
+
+
+
+## Groupe lasso pour les modèles mixtes
+\vspace*{-.3cm}
+\small
+\begin{itemize}
+\item Soit les variables explicatives $\bX \in \mathbb{R}^{n \times p}$ appartenant à un des $K$ \textbf{groupes distinct} \textbf{prédéfini} de taille $p_{k}$.
+\item $\bbeta_{(k)}$ est la parti de $\bbeta$ qui correspond à la groupe $k$ \pause
+\item Nous considérons l'estimateur pénalisé par le groupe lasso
+\begin{equation}
+\min_{\bbeta} L(\bbeta|\bD)+\lambda\sum_{k=1}^{K}w_{k}\|\bbk\|_{2},\label{eq:wlslasso}
+\end{equation} 
+\item où
+\begin{equation}
+L(\bbeta\mid\bD)=\frac{1}{2}\left[\bY-\widehat{\bY}\right]^{\top}\mathbf{W}\left[\bY-\widehat{\bY}\right]
+\end{equation}
+$\widehat{\bY}=\sum_{j=1}^{p}\beta_{j}X_{j}$, $\bD$ représente les données courants $\lbrace \bY, \bX \rbrace$, et
+\begin{equation}
+\bW_{n \times n} = \frac{1}{\sigma^2(1-\eta)}\left(  \bI_{n} - \bU_1 \left(\frac{1-\eta}{\eta}\bSigma_1^{-1} + \bI_{k}\right) ^{-1}\bU_1^T \right)   \label{eq:weight}
+\end{equation}
+\end{itemize}
+
+## Descente groupée: exploitation de la sparsité
+
+\small
+
+On minimise la fonction de perte
+\[
+\frac{1}{2}\left[\bY-\widehat{\bY}\right]^{\top}\mathbf{W}\left[\bY-\widehat{\bY}\right]+\lambda\sum_{k=1}^{K}w_{k}\Vert\boldsymbol{\beta}^{(k)}\Vert_{2}
+\]
+Au cours de chaque sous-itération, optimisez $\bbeta^{(k)}$. Revisez $\bbeta^{(k^{\prime})}=\widetilde{\bbeta}^{(k^{\prime})}$
+pour $k^{\prime}\ne k$ à leur valeurs courantes.
+\begin{enumerate}
+\item Initialisation: $\widetilde{\bbeta}$
+\item Descente cyclique en groupe: pour $k=1,2,\ldots,K$,
+révisez $\bbeta^{(k)}$ en minimisant la fonction de perte
+
+\[
+\widetilde{\bbeta}^{(k)}(\textrm{new})\leftarrow\arg\min_{\boldsymbol{\beta}^{(k)}}L(\bbeta\mid\bD)+\lambda w_{k}\Vert\bbeta^{(k)}\Vert_{2}
+\]
+
+\item Réitérez (2) jusqu'à la convergence.
+\end{enumerate}
+
+
+## La condition <<Quadratic Majorization>>
+\vspace*{-0.25cm}
+\begin{equation}
+\argmin_{\boldsymbol{\beta}^{(k)}}\frac{1}{2}\left[\bY-\widehat{\bY}\right]^{\top}\mathbf{W}\left[\bY-\widehat{\bY}\right]+\lambda\sum_{k=1}^{K}w_{k}\Vert\boldsymbol{\beta}^{(k)}\Vert_{2} \label{eq:qmcond}
+\end{equation}
+\vspace*{-0.25cm}
+\begin{itemize}
+\item Malheureusement, il n'y a pas de forme explicite pour \eqref{eq:qmcond} \pause 
+\item Cependant, la fonction de perte $L(\bbeta|\bD)$ satisfait à la condition <<quadratic majorization>> (QM) $^1$, puiqu'il existe
+\begin{itemize}
+\item une matrice $p\times p$, $\bH=\bX^{\top}\mathbf{W}\bX$, et 
+\item $\nabla L(\bbeta|\bD)=-\left(Y-\hat{Y}\right)^{\top}\mathbf{W}\bX$
+\end{itemize}
+qui dépend seulement des données $\bD$, tel que pour tous $\bbeta,\bbeta^{*}$,
+\small
+\begin{equation*}
+L(\bbeta\mid\bD)\le L(\bbeta^{\ast}\mid\bD)+(\bbeta-\bbeta^{\ast})^{\trans}\nabla L(\bbeta^{\ast}|\bD)+\frac{1}{2}(\bbeta-\bbeta^{\ast})^{\trans}\bH(\bbeta-\bbeta^{*})\label{QM1}
+\end{equation*}
+\end{itemize}
+
+\footnotetext[1]{\scriptsize{Yang and Zou. Statistical Computing (2014)}}
+
+
+
+
+## Descente de coordonnées généralisée (GCD) 
+
+\vspace*{-.35cm}
+\centering
+\framedgraphic{maj-crop.pdf}
+
+
+
+## Descente de coordonnées généralisée par groupe
+\vspace*{-.35cm}
+\footnotesize
+\begin{itemize}
+\item Révisez $\bbeta$ par \alert{groupe}
+\[
+\bbeta-\widetilde{\bbeta}=(\underbrace{0,\ldots,0}_{k-1},\bbeta^{(k)}-\widetilde{\bbeta}^{(k)},\underbrace{0,\ldots,0}_{K-k})
+\] \pause 
+\item Il suffit alors de calculer la fonction de majoration \alert{par groupe}
+\begin{align*}
+L(\bbeta\mid\bD)& \leq L(\widetilde{\bbeta}\mid\bD)-(\bbeta^{(k)}-\widetilde{\bbeta}^{(k)})^{\trans}U^{(k)}+\frac{1}{2}\gamma_{k}(\bbeta^{(k)}-\widetilde{\bbeta}^{(k)})^{\trans}(\bbeta^{(k)}-\widetilde{\bbeta}^{(k)}) \\
+U^{(k)} & =\frac{\partial}{\partial\bbk}L(\bbeta\mid\bD)=-\left(Y-\hat{Y}\right)^{\top}\mathbf{W}\mathbf{X}_{(k)}\\
+\mathbf{H}^{(k)} & =\frac{\partial^{2}}{\partial\bbk\partial\bbk^{\top}}L(\bbeta\mid\bD)=\mathbf{X}_{(k)}^{\top}\mathbf{W}\mathbf{X}_{(k)}
+\end{align*}
+\item $\gamma_{k}=\mathrm{eigen_{\max}}(\bH^{(k)})$ \pause  
+
+\item Révisez $\widetilde{\bbeta}^{(k)}$ qui a \structure{une forme explicite}:
+\[
+\widetilde{\bbeta}^{(k)}(\textrm{new})=\frac{1}{\gamma_{k}}\left(U^{(k)}+\gamma_{k}\widetilde{\bbeta}^{(k)}\right)\Bigg(1-\frac{\lambda w_{k}}{\Vert U^{(k)}+\gamma_{k}\widetilde{\bbeta}^{(k)}\Vert_{2}}\Bigg)_{+}
+\]
+\end{itemize}
+
+<!--
+%Note ``$=$'' is taken only when $\bbeta^{(k)}=\widetilde{\bbeta}^{(k)}$
+-->
+
+
+# Discussion
+
+## Forces et faiblesses
+
+\textcolor{blue}{\textbf{Forces}}
+\begin{itemize}
+\item Sélection des interactions non-linéaires en conservant la propriété de l'hérédité forte quand $ p >> N$.
+\item \texttt{sail} permet une modélisation flexible des variables explicatives.
+\item \texttt{ggmix} est la première implémentation du groupe lasso pour les modèles mixtes.
+\end{itemize}
+\pause
+\textcolor{red}{\textbf{Faiblesses}}
+\begin{itemize}
+\item \texttt{sail} peut actuellement gérer seulement $ E \cdot f(X) $ ou $ f(E) \cdot X $.
+\item Ne permet pas $ f (X_1, E) $, ni $ f(X_1, X_2) $.
+\item L'implémentation actuelle de \texttt{sail} est lente en raison de la validation croisée pour les 2 paramètres de réglage.
+\item L'empreinte mémoire est un problème pour \texttt{sail} et \texttt{ggmix}
+\end{itemize}
+
+
+
+## Directions futures
+
+\begin{itemize}
+\item Est-ce que les deux paramètres de réglage sont vraiment nécessaires ?
+$$ 
+\lambda  \left\lbrace (1 - \alpha) \left[ w_E |\beta_E| + \sum_{j=1}^{p} w_j \lVert  \theta_j \rVert_2 \right]  +  \alpha \sum_{j=1}^{p} w_{jE} |\gamma_{j}| \right\rbrace
+$$ 
+
+\item Faible propriété héréditaire $ \rightarrow \alpha_j = \gamma_j (|\beta_j| + |\beta_E|) $.
+\item Implémenter l'algorithme ADMM. Calcul distribué (GPU).
+\item Autres pénalités (SCAD, MCP).
+\item Variable réponse binaire.
+\end{itemize}
+
+## Remerciements
+
+\begin{columns}[c] % The "c" option specifies centered vertical alignment while the "t" option is used for top vertical alignment
+
+%\column{.45\textwidth} % Left column and width
+
+%\begin{itemize}
+%\footnotesize
+%\item \textbf{Dr. Celia Greenwood}
+%\item \mbox{Dr. Yang}
+%\item Maxime Turgeon, Kevin McGregor, Lauren Mokry, \mbox{Dr. Forest}
+%\item \textbf{Greg Voisin}, \mbox{Dr. Forgetta}, \mbox{Dr. Klein} 
+%\item \textbf{Mothers and children from the study}
+%\end{itemize}
+
+\column{.75\textwidth} % Right column and width
+\begin{figure}
+\includegraphics[width=0.7\columnwidth]{Logo-LUDMER.png}\\[10mm]
+\includegraphics[width=0.7\columnwidth]{lady.png}\\[10mm]
+\includegraphics[width=0.7\columnwidth]{mcgill.png}
+\end{figure}
+
+\end{columns}
+
+
+
+
+
+## Références
+
+\begin{itemize}
+\item \scriptsize{Radchenko, P., \& James, G. M. (2010). Variable selection using adaptive nonlinear interaction structures in high dimensions. Journal of the American Statistical Association, 105(492), 1541-1553.}
+
+\item \scriptsize{Choi, N. H., Li, W., \& Zhu, J. (2010). Variable selection with the strong heredity constraint and its oracle property. Journal of the American Statistical Association, 105(489), 354-364.}
+
+\item \scriptsize{Chipman, H. (1996). Bayesian variable selection with related predictors. Canadian Journal of Statistics, 24(1), 17-36.}
+
+\item \scriptsize{Friedman, J., Hastie, T., \& Tibshirani, R. (2010). Regularization paths for generalized linear models via coordinate descent. Journal of statistical software, 33(1)}
+
+\item \scriptsize{Yang, Y., \& Zou, H. (2015). A fast unified algorithm for solving group-lasso penalize learning problems. Statistics and Computing, 25(6), 1129-1141}
+
+\item \scriptsize{De Leeuw, J. (1994). Block-relaxation algorithms in statistics. In Information systems and data analysis (pp. 308-324). Springer Berlin Heidelberg.}
+\end{itemize}
+
+\LARGE sahirbhatnagar.com
+
+# Appendix
+
+
+## Why the L1 norm ?
+
+\begin{itemize}
+\item For a fixed real number $q \geq 0$ consider the criterion
+$$
+\widetilde{\boldsymbol{\beta}} = \argmin_{\boldsymbol{\beta}} \left\lbrace \sum_{i=1}^{n} \left(y_i - \beta_0 - \sum_{j=1}^p x_{ij}\beta_j \right)^2 + \lambda \sum_{j=1}^p |\beta_j|^q \right\rbrace
+$$
+
+\item Why do we use the $\ell_1$ norm? Why not use the $q=2$ (Ridge) or any $\ell_q$ norm?
+
+\begin{center}
+\includegraphics[scale=0.25]{regions.png}
+\end{center}
+
+
+\item $q=1$ is the smallest value that yields a sparse solution \alert{and} yields a \textbf{convex} problem $\to$ scalable to high-dimensional data
+\item For $q <1$ the constrained region is \textbf{nonconvex}
+\end{itemize}
+
+
+## Convex Function
+
+\framedgraphic{convex.png}
+
+## Ridge vs. Lasso
+
+\begin{itemize}
+\item Estimators of $\beta_j$ in terms of the least-squares estimate $\widehat{\beta}_j^{LS}$ for an orthonormal model matrix $\mathbf{X}$ \newline
+
+\begin{center}
+\ctable[pos=h!,doinside=\footnotesize]{lcc}{
+	}{
+	\FL
+	q & Estimator      & Formula \ML
+1 & Lasso & $\textrm{sign}(\widehat{\beta}_j^{LS}) (|\widehat{\beta}_j^{LS}| - \lambda)_+$  \\
+2 & Ridge & $\widehat{\beta}_j^{LS} / (1 + \lambda)$  \LL	}
+\end{center}
+
+\begin{center}
+\includegraphics[scale=0.20]{ridge_lasso.png}
+\end{center}
+
+\end{itemize}
+
+
+
+## Subgradient
+\scriptsize
+\begin{itemize}
+\item A basic property of differentiable convex functions is that the first-order
+tangent approximation always provides a lower bound. 
+\item The notion of subgradient is based on a natural generalization of this idea. In particular, given a
+convex function $f: \mathbb{R}^p \to\mathbb{R}$, a vector $z \in \mathbb{R}^p$ is said to be a \textit{subgradient} of $f$ at $\beta$ if \[f(\beta^\prime) \geq f(\beta) + \langle z , \beta^\prime - \beta \rangle, \quad \textrm{for all }\beta^\prime \in \mathbb{R}^p\]
+\end{itemize}
+
+\framedgraphic{subgradient.png}
+
+## Algorithm for \texttt{ggmix}
+
+\begin{algorithm}[H]
+			\SetAlgoLined
+			%	\KwResult{Write here the result }
+			Set the iteration counter $k \leftarrow 0$, initial values for the parameter vector $\bTheta^{(0)}$ and convergence threshold $\epsilon$\;
+			\For{$\lambda \in \left\lbrace \lambda_{max}, \ldots, \lambda_{min} \right\rbrace$}{
+				\Repeat{convergence criterion is satisfied: $||\bTheta^{(k+1)} - \bTheta^{(k)}||_2 < \epsilon$}{
+					\begin{align*}
+					\bbeta^{(k+1)} &\leftarrow \argmin_{\bbeta} Q_{\lambda}\left( \bbeta, \eta^{(k)}, {\sigma^2}^{\,\,(k)}\right) \\		
+					\eta^{(k+1)} &\leftarrow \argmin_{\eta} Q_{\lambda}\left( \bbeta^{(k+1)}, \eta, {\sigma^2}^{\,\,(k)}\right) \\
+					{\sigma^2}^{\,\,(k+1)} &\leftarrow \argmin_{\sigma^2} Q_{\lambda}\left( \bbeta^{(k+1)}, \eta^{(k+1)}, \sigma^2\right) 
+					\end{align*}
+					
+					$k \leftarrow k +1$
+				}
+			}
+			\caption{Block Relaxation Algorithm} \label{alg:cgd2}
+\end{algorithm}
+
+
+## Coordinate Descent
+\vspace*{-.35cm}
+\small
+\begin{itemize}
+\item Minimize the objective function
+\[ \underset{\boldsymbol{\beta}}{\min}F(\boldsymbol{\beta})\equiv L(\beta_{1},\ldots,\beta_{p})+p_{\lambda}(\boldsymbol{\beta}) \]
+
+\item $L:\mathbb{R}^{p}\rightarrow\mathbb{R}$ is differentiable convex, $p_{\lambda}:\mathbb{R}^{p}\rightarrow\mathbb{R}$ bounded from below but not necessarily smooth. e.g. \textrm{$p_{\lambda}(\boldsymbol{\beta})=\lambda\sum_{j=1}^{p}|\beta_{j}|$}
+\end{itemize}
+
+\begin{exampleblock}{Coordinate Descent (Fu (1998), Friedman et al. (2007), Wu and Lange (2008))}
+\begin{enumerate}
+\vspace*{-.1cm}
+\item Initialization: $\tilde{\boldsymbol{\beta}}$
+\item Cyclic coordinate descent: for $j=1,2,\ldots,p$,
+update $\beta_{j}$ by minimizing the objective function
+\vspace*{-.2cm}
+\[
+\tilde{\beta}_{j}^{new}\leftarrow\arg\min_{\beta_{j}}F(\beta_{j}|\beta_{k}=\tilde{\beta}_{k},k\neq j)
+\]
+\item Repeat (2) till convergence.
+\end{enumerate}
+\end{exampleblock}
+
+\footnotetext[1]{\scriptsize{Fu (1998), Friedman et al. (2007), Wu and Lange (2008)}}
+
+
+
+## Quadratic Majorization Condition
+
+\footnotesize{Empirical loss}
+\[
+L(\bbeta\mid\bD)=\frac{1}{n}\sum_{i=1}^{n}\Phi(y_{i},\bbeta^{\trans}\bx_{i})
+\]
+$\Phi$ satisfies the \textcolor{blue}{\footnotesize{}QM condition}{\footnotesize{},
+if and only if:}{\footnotesize \par}
+\begin{enumerate}
+\item {\footnotesize{}$L(\bbeta\mid\bD)$ is }\textcolor{blue}{\footnotesize{}differentiable}{\footnotesize{}
+as a function of $\bbeta$.}{\footnotesize \par}
+\item {\footnotesize{}Can find $\bH$ ($p$ by $p$), may only depend on
+the data $\bD$, such that for all $\bbeta,\bbeta^{*}$
+\[
+L(\bbeta\mid\bD)\le L(\bbeta^{*}\mid\bD)+(\bbeta-\bbeta^{*})^{\trans}\nabla L(\bbeta^{*}|\bD)+\frac{1}{2}(\bbeta-\bbeta^{*})^{\trans}\bH(\bbeta-\bbeta^{*})
+\]
+}{\footnotesize \par}
+\end{enumerate}
+\begin{table}
+\begin{center}
+
+\begin{tabular}{lll}
+\toprule
+Loss  & $-\nabla L(\bbeta\mid\bD)$  & $\bH$ \tabularnewline
+\midrule
+Least squares  & $\frac{1}{n}\sum_{i=1}^{n}(y_{i}-\bx_{i}^{\trans}\bbeta)\bx_{i}$  & $\bX^{\trans}\bX/n$\tabularnewline
+%Huber regression & $\frac{1}{n}\left[2\bx_i \min(|y_i-\bx^{\trans}_i\bbeta|,\delta) \mathrm{sign}(y_i-\bx^{\trans}_i\bbeta) \right]$   & $4\bX^{\trans} \bX/n$\\
+Logistic regression  & $\frac{1}{n}\sum_{i=1}^{n}y_{i}\bx_{i}\frac{1}{1+\exp(y_{i}\bx_{i}^{\trans}\bbeta)}$  & $\frac{1}{4}\bX^{\trans}\bX/n$\tabularnewline
+Squared hinge loss  & $\frac{1}{n}\sum_{i=1}^{n}2y_{i}\bx_{i}(1-y_{i}\bx_{i}^{\trans}\bbeta)_{+}$  & $4\bX^{\trans}\bX/n$\tabularnewline
+Huberized hinge loss  & $\frac{1}{n}\sum_{i=1}^{n}y_{i}\bx_{i}\textrm{hsvm}^{\prime}(y_{i}\bx_{i}^{\trans}\bbeta)$  & $\frac{2}{\delta}\bX^{\trans}\bX/n$\tabularnewline
+\bottomrule
+\end{tabular}
+\end{center}
+\end{table}
+
+
+## Verifying Quadratic Majorization Condition
+
+\begin{lemma}[Yang and Zou, 2014] Assume $\Phi(y,f)$ is differentiable with respect to $f$ and write $\Phi^{\prime}_f=\frac{\partial{\Phi(y,f)}}{\partial{f}}$, $\nabla L( \bbeta | \bD)=\frac{1}{n}\sum^n_{i=1}\Phi^{\prime}_f(y_i,\bx^{\trans}_i \bbeta)\bx_i.$
+\begin{enumerate}
+\item If $\Phi^{\prime}_f$ is \textbf{Lipschitz continuous} with constant $C$ such that
+$$
+|\Phi^{\prime}_f(y,f_1)-\Phi^{\prime}_f(y,f_2)| \le C |f_1-f_2| \quad \forall \ y,f_1,f_2,
+$$
+then the QM condition holds for $\Phi$ and $\bH=\frac{2C}{n}\bX^{\trans}  \bX$. 
+
+\item If $\Phi^{\prime \prime}_f=\frac{\partial{\Phi^2(y,f)}}{\partial{f^2}}$ \textbf{exists} and
+$$
+\Phi^{\prime \prime}_f \le C_2 \quad \forall \ y,f,
+$$
+then the QM condition holds for $\Phi$ and $\bH=\frac{C_2}{n}\bX^{\trans} \bX$.
+\end{enumerate}
+
+\end{lemma}
+
+
+## Strict Descent Property of GMD
+
+\footnotesize
+\begin{exampleblock}{Proposition (Yang and Zou, 2014)}
+
+\begin{itemize}
+\item If $\widetilde{\bbeta}^{(k)}(\textrm{new})\neq\widetilde{\bbeta}^{(k)}$
+then
+\[
+L(\widetilde{\bbeta}^{(k)}(\textrm{new})\mid\bD)+\lambda w_{k}\Vert\widetilde{\bbeta}^{(k)}(\textrm{new})\Vert_{2}<L(\widetilde{\bbeta}\mid\bD)+\lambda w_{k}\Vert\widetilde{\bbeta}^{(k)}\Vert_{2}
+\]
+the objective function is \textbf{strictly decreased} after updating
+all $k$ in a cycle.
+\item If $\widetilde{\bbeta}^{(k)}(\textrm{new})=\widetilde{\bbeta}^{(k)}$
+for all $k$, then the solution must satisfy the KKT conditions:\begin{align*} -U^{(k)}+\lambda w_{k}\cdot\frac {\widetilde\bbeta^{(k)} }{\Vert\widetilde\bbeta^{(k)}\Vert_2}=\boldsymbol{0}\qquad\textrm{if }\widetilde\bbeta^{(k)}\neq \boldsymbol{0},\\ \left\Vert U^{(k)} \right\Vert_2 \le\lambda w_{k}\qquad\textrm{if }\widetilde\bbeta^{(k)}=\boldsymbol{0}, \end{align*}which
+means that the algorithm converges and finds\textbf{ the right answer}.
+\end{itemize}
+\end{exampleblock}
+
+
+
+## Separability and Coordinate Descent
+
+\[f(\beta_1, \ldots, \beta_p) = g(\beta_1, \ldots, \beta_p) + \sum_{j=1}^{p} h_j(\beta_j)\]
+
+\begin{itemize}
+\item $g: \mathbb{R}^p \to \mathbb{R}$ is differentiable and convex, and the univariate functions $h_j: \mathbb{R}\to \mathbb{R}$ are convex \textbf{but not necessarily differentiable}.
+\item Tseng (2001) shows that for any convex cost function $f$ with separable structure, the coordinate descent algorithm is guaranteed to converge to the global minimizer
+\item The key property underlying this result is the separability of the nondifferentiable component $h(\beta) = \sum_{j=1}^{p}h_j (\beta_j)$, as a sum of functions of each individual parameter.
+\end{itemize}
+
+
+
+
+\footnotetext[1]{\scriptsize{Tseng. Journal of optimization theory and applications (2001)}}
+
+## Lasso vs. Group Lasso
+
+\begin{itemize}
+\item {\footnotesize{}Logistic regression with group lasso: $n=50,$ $p=6$.}{\footnotesize \par}
+\item {\footnotesize{}Group lasso: specify $(\beta_{1},\beta_{2},\beta_{3}),\ (\beta_{4},\beta_{5},\beta_{6})$.
+Variable selection \structure{at the group level}. }{\footnotesize \par}
+\item {\footnotesize{}Solution path: view $\boldsymbol{\beta}$ as function
+of $\lambda$.}{\footnotesize \par}
+\end{itemize}
+\begin{center}
+\includegraphics[scale=0.4]{grouplasso}
+\par\end{center}
+
+
+
+
+
+
+## Group Lasso Motivation
+
+\begin{itemize}
+\item \textbf{\small{}\structure{Categorical predictors (factors):}}{\small{}
+dummy variables}{\small \par}
+\item \textbf{\small{}\structure{Additive Model: }}{\footnotesize{}$\sum_{k=1}^{K}f_{k}(X^{(k)})\approx\sum_{k=1}^{K}\sum_{m=1}^{M}\beta_{km}h_{m}(X^{(k)})$}
+
+\begin{itemize}
+\item {\small{}ex. }\textbf{\small{}birth weight}{\small{} predicted by
+the mother's }\textbf{\small{}age}{\small{} and }\textbf{\small{}weight}{\small{},
+}\\
+{\small{}$Age,$ $Age^{2}$, $Age^{3}$ and $Weight$, $Weight^{2}$,
+$Weight^{3}$}{\small \par}
+\end{itemize}
+\end{itemize}
+\small Group lasso partitions the variable coefficients into $K$ groups 
+\[
+\boldsymbol{\beta}=([\boldsymbol{\beta}^{(1)}]^{\intercal},[\boldsymbol{\beta}^{(2)}]^{\intercal},\cdots,[\boldsymbol{\beta}^{(K)}]^{\intercal})^{\intercal}
+\]
+Extended from the lasso penalty, the group lasso estimator is: 
+\[
+\underset{(\beta_{0},\boldsymbol{\beta})}{\min}\frac{1}{2}\left\Vert \mathbf{y}-\beta_{0}-\mathbf{X}\boldsymbol{\beta}\right\Vert _{2}^{2}+\lambda\sum_{k=1}^{K}\sqrt{p_{k}}\Vert\boldsymbol{\beta}^{(k)}\Vert_{2}\qquad p_{k}-\mathrm{group\ size}
+\]
+
+
+## Choosing Model Complexity
+
+\small
+\begin{itemize}
+\item The tuning parameter $\lambda$ controls the \alert{complexity} of the model
+%\begin{itemize}
+%\item smaller values of $\lambda$ free up more parameters and allow the model to adapt more closely to the training data
+%\item larger values of $\lambda$ restrict the parameters more, leading to \textbf{sparser, more interpretable models} %that fit the data less closely 
+%\end{itemize}
+%\item There is usually an intermediate value of $\lambda$ that strikes a good balance between these two extremes, and in %the process, produces a model with some coefficients equal to zero.
+\item \textbf{Generalization ability of the model}: we select the $\lambda$ that gives the most accurate model for predicting independent test data from the same population
+\end{itemize}
+
+```{r, echo=FALSE,fig.subcap=c('one plot', 'the other one'), out.width='.49\\linewidth', message=FALSE, warning=FALSE}
+library(glmnet)
+
+
+myCoefPlot <- function (beta, norm, lambda, df, dev, label = FALSE, xvar = c("norm", 
+  "lambda", "dev"), xlab = iname, ylab = "Coefficients", ...) {
+  which = nonzeroCoef(beta)
+  nwhich = length(which)
+  switch(nwhich + 1, `0` = {
+    warning("No plot produced since all coefficients zero")
+    return()
+  }, `1` = warning("1 or less nonzero coefficients; glmnet plot is not meaningful"))
+  beta = as.matrix(beta[which, , drop = FALSE])
+  xvar = match.arg(xvar)
+  switch(xvar, norm = {
+    index = if (missing(norm)) apply(abs(beta), 2, sum) else norm
+    iname = "L1 Norm"
+    approx.f = 1
+  }, lambda = {
+    index = log(lambda)
+    iname = "Log Lambda"
+    approx.f = 0
+  }, dev = {
+    index = dev
+    iname = "Fraction Deviance Explained"
+    approx.f = 1
+  })
+  dotlist = list(...)
+  type = dotlist$type
+  if (is.null(type)) 
+    matplot(index, t(beta), lty = 1, xlab = xlab, ylab = ylab, 
+      type = "l", ...)
+  else matplot(index, t(beta), lty = 1, xlab = xlab, ylab = ylab, 
+    ...)
+  atdf = pretty(index)
+  prettydf = approx(x = index, y = df, xout = atdf, rule = 2, 
+    method = "constant", f = approx.f)$y
+  axis(3, at = atdf, labels = prettydf, tcl = NA, cex.axis = 2)
+  if (label) {
+    nnz = length(which)
+    xpos = max(index)
+    pos = 4
+    if (xvar == "lambda") {
+      xpos = min(index)
+      pos = 2
+    }
+    xpos = rep(xpos, nnz)
+    ypos = beta[, ncol(beta)]
+    text(xpos, ypos, paste(which), cex = 0.5, pos = pos)
+  }
+}
+
+
+
+myGlmnetPlot <- function (x, xvar = c("norm", "lambda", "dev"), label = FALSE, 
+  ...) {
+  xvar = match.arg(xvar)
+  myCoefPlot(x$beta, lambda = x$lambda, df = x$df, dev = x$dev.ratio, 
+    label = label, xvar = xvar, ...)
+}
+
+# Gaussian
+myglmplot <- function (x, sign.lambda = 1, ...) {
+  cvobj = x
+  xlab = "log(Lambda)"
+  if (sign.lambda < 0) 
+    xlab = paste("-", xlab, sep = "")
+  plot.args = list(x = sign.lambda * log(cvobj$lambda), y = cvobj$cvm, 
+    ylim = range(cvobj$cvup, cvobj$cvlo), xlab = xlab, ylab = cvobj$name, 
+    type = "n")
+  new.args = list(...)
+  if (length(new.args)) 
+    plot.args[names(new.args)] = new.args
+  do.call("plot", plot.args)
+  glmnet:::error.bars(sign.lambda * log(cvobj$lambda), cvobj$cvup, 
+    cvobj$cvlo, width = 0.01, col = "darkgrey")
+  points(sign.lambda * log(cvobj$lambda), cvobj$cvm, pch = 20, 
+    col = "red")
+  axis(side = 3, at = sign.lambda * log(cvobj$lambda), labels = paste(cvobj$nz), 
+    tick = FALSE, line = 0, cex.axis = 2)
+  abline(v = sign.lambda * log(cvobj$lambda.min), lty = 3)
+  abline(v = sign.lambda * log(cvobj$lambda.1se), lty = 3)
+  invisible()
+}
+set.seed(12348)
+x=matrix(rnorm(100*20),100,20)
+y=-0.6*x[,1] + .5*x[,2] + 2*rnorm(100)
+fit1=glmnet::cv.glmnet(x,y)
+par(mai=c(1.02,1.05,0.82,0.42))
+myGlmnetPlot(fit1$glmnet.fit, xvar = "lambda", cex.lab = 2, cex.axis = 2)
+par(mai=c(1.02,1.05,0.82,0.42))
+myglmplot(fit1, cex.lab = 2, cex.axis = 2)
+```
+
+
+## Simulation Study
+
+\begin{itemize}
+	\item $\bX^{(test)}$: 4k SNPs from UK Biobank genotyped data from 1k randomly sampled individuals
+	\item $\bX^{(causal)}$: random sample of 400 SNPs from $\bX^{(test)}$
+	%\item $\bX^{(other)}$: $n \times 4000$ matrix of SNPs that have been randomly sampled across the genome, with sampling weights proportional to the size of each chromosome. This matrix will be used in the construction of the kinship matrix. Some of these $\bX^{(other)}$ SNPs, in conjunction with some of the SNPs in $\bX^{(test)}$ will be used in construction of the kinship matrix. We will alter the balance between these two contributors and with the proportion of causal SNPs used to calculate kinship. The maximum LD between any two SNPs in $\bX^{(test)}$ and $\bX^{(other)}$ will be $\rho$.
+	\item $\bX^{(kinship)}$: random sample of 4k SNPs used to construct the kinship matrix ($\bPhi$) including the causal SNPs 
+	\item $\beta_j \sim Unif(0.1,0.3)$ for $j = 1, \ldots, 400$ 
+	\item $Y = \beta_0 + \sum_{j=1}^{400} \beta_j \bX^{(causal)}_j + P + E$
+	\item $P \sim \mathcal{N}(0, 0.6 \cdot \bPhi_{n\times n})$, $E \sim \mathcal{N}(0, 0.4 \cdot \mb{I}_{n\times n})$
+	%\item $Y = Y^* + k \cdot \varepsilon$, where the error term $\varepsilon$ is generated from a standard normal distribution, and $k$ is chosen such that the signal-to-noise ratio $SNR =\left(Var(Y^*)/Var(\varepsilon)\right)$ is 1	
+\end{itemize}
+
+
+
+## Motivation
+
+\begin{figure}
+	\centering
+	\hspace*{-0.80cm}
+	\subfloat[Retired \label{fig:11}]{
+		\resizebox{110pt}{!}{
+\begin{tikzpicture}[cable/.style={circle, fill=blue!30!black, minimum size=10mm, inner sep=0pt, outer sep=0pt}]
+\tikzstyle{g1} = [circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=green!60!black];
+\node[g1] (center) at (0,0) {};
+\foreach \i in {0,1,...,6}
+\node[g1] (1-\i) at (60*\i:10mm) {};
+\foreach \i in {0,1,...,12}
+\node[g1] (2-\i) at ({15+30*\i}:1.9315) {};
+\begin{scope}[on background layer]
+\node[circle, fill=green!30, fit=(2-1) (2-7), inner sep=-3pt] (envelope) {};
+\end{scope}
+\end{tikzpicture}
+		}
+	}
+	\subfloat[Employed \label{fig:22}]{
+		\resizebox{110pt}{!}{
+\begin{tikzpicture}[cable/.style={circle, fill=blue!30!black, minimum size=10mm, inner sep=0pt, outer sep=0pt}]
+\tikzstyle{g3} = [circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=blue!60!black];
+\node[g3] (center) at (0,0) {};
+\foreach \i in {0,1,...,6}
+\node[g3] (1-\i) at (60*\i:10mm) {};
+\foreach \i in {0,1,...,12}
+\node[g3] (2-\i) at ({15+30*\i}:1.9315) {};
+\begin{scope}[on background layer]
+\node[circle, fill=blue!30, fit=(2-1) (2-7), inner sep=-3pt] (envelope) {};
+\end{scope}
+\end{tikzpicture}
+		}
+		
+	}
+\subfloat[Students \label{fig:33}]{
+			\resizebox{110pt}{!}{
+				\begin{tikzpicture}[cable/.style={circle, fill=blue!30!black, minimum size=10mm, inner sep=0pt, outer sep=0pt}]
+				\tikzstyle{g2} = [circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=red!60!black];
+				\node[g2] (center) at (0,0) {};
+				\foreach \i in {0,1,...,6}
+				\node[g2] (1-\i) at (60*\i:10mm) {};
+				\foreach \i in {0,1,...,12}
+				\node[g2] (2-\i) at ({15+30*\i}:1.9315) {};
+				\begin{scope}[on background layer]
+				\node[circle, fill=red!30, fit=(2-1) (2-7), inner sep=-3pt] (envelope) {};
+				\end{scope}
+				\end{tikzpicture}
+			}
+			
+		}
+	\label{fig:caption}
+\end{figure}
+
+
+## Linear Model
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+domain=1:10,
+range=-50:50,
+xtick={1,...,10},
+ytick={-50,-40,...,50},
+xmajorgrids=false,ymajorgrids=false,
+xlabel={number of credit cards},title={},
+ylabel={total credit card balance},
+every axis plot/.append style={ultra thick}
+]
+\addplot+[mark=students, only marks] coordinates {
+	(1,5)
+	(2,20)
+	(3,32)
+	(4,28.1)
+	(5,20)
+	(6,41)
+	(7,43)
+	(8,47)
+	(9,42)
+	(10,52)
+};
+\addplot+[mark=working, only marks] coordinates {     
+	(1,-9.8)
+	(2,-5.6)
+	(3,10)
+	(4,-6)
+	(5,4.0)
+	(6,3.2)
+	(7,6.4)
+	(8,18)
+	(9,30)
+	(10,22)
+};
+\addplot+[mark=retired, only marks] coordinates {     
+	(1,-45)
+	(2,-30)
+	(3,-13)
+	(4,-17)
+	(5,-15)
+	(6,-18)
+	(7,-13)
+	(8,-20)
+	(9,-5)
+	(10,-8)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+
+
+## Linear Model
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+domain=1:10,
+range=-50:50,
+xtick={1,...,10},
+ytick={-50,-40,...,50},
+xmajorgrids=false,ymajorgrids=false,
+xlabel={number of credit cards},title={},
+ylabel={total credit card balance},
+every axis plot/.append style={ultra thick}
+]
+\addplot+[mark=students, only marks] coordinates {
+	(1,5)
+	(2,20)
+	(3,32)
+	(4,28.1)
+	(5,20)
+	(6,41)
+	(7,43)
+	(8,47)
+	(9,42)
+	(10,52)
+};
+\addplot+[mark=working, only marks] coordinates {     
+	(1,-9.8)
+	(2,-5.6)
+	(3,10)
+	(4,-6)
+	(5,4.0)
+	(6,3.2)
+	(7,6.4)
+	(8,18)
+	(9,30)
+	(10,22)
+};
+\addplot+[mark=retired, only marks] coordinates {     
+	(1,-45)
+	(2,-30)
+	(3,-13)
+	(4,-17)
+	(5,-15)
+	(6,-18)
+	(7,-13)
+	(8,-20)
+	(9,-5)
+	(10,-8)
+};
+\addplot+[mark=none, color=black]{3*x-10};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+	
+	
+## Random Intercept
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+domain=1:10,
+range=-50:50,
+xtick={1,...,10},
+ytick={-50,-40,...,50},
+xmajorgrids=false,ymajorgrids=false,
+xlabel={number of credit cards},title={},
+ylabel={total credit card balance},
+every axis plot/.append style={ultra thick}
+]
+\addplot+[mark=none, color=red!70]{3*x+15};
+\addplot+[mark=students, only marks] coordinates {
+(1,5)
+(2,20)
+(3,32)
+(4,28.1)
+(5,20)
+(6,41)
+(7,43)
+(8,47)
+(9,42)
+(10,52)
+};
+\addplot+[mark=none, color=blue!70]{3*x-5};
+\addplot+[mark=working, only marks] coordinates {     
+(1,-9.8)
+(2,-5.6)
+(3,10)
+(4,-6)
+(5,4.0)
+(6,3.2)
+(7,6.4)
+(8,18)
+(9,30)
+(10,22)
+};
+\addplot+[mark=none, color=green!70]{3*x-40};
+\addplot+[mark=retired, only marks] coordinates {     
+(1,-45)
+(2,-30)
+(3,-13)
+(4,-17)
+(5,-15)
+(6,-18)
+(7,-13)
+(8,-20)
+(9,-5)
+(10,-8)
+};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+
+## When Grouping Information is Unknown
+
+\begin{itemize}
+\item In our applications, the grouping information is unknown
+\item It must be estimated from the data
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[cable/.style={circle, fill=blue!30!black, minimum size=10mm, inner sep=0pt, outer sep=0pt}]
+\tikzstyle{g1} = [circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=green!60!black];
+\tikzstyle{g2} = [circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=red!60!black];
+\tikzstyle{g3} = [circle, minimum width=2*\ab cm, inner sep=0pt, outer sep=0pt, ball color=blue!60!black];
+\node[g1] (center) at (0,0) {};
+
+\foreach \i in {0,6,4}
+\node[g2] (1-\i) at (60*\i:10mm) {};
+
+\foreach \i in {1,3,5}
+\node[g3] (1-\i) at (60*\i:10mm) {};
+
+\foreach \i in {2}
+\node[g1] (1-\i) at (60*\i:10mm) {};
+
+\foreach \i in {0,3,6,9,12}
+\node[g3] (2-\i) at ({15+30*\i}:1.9315) {};
+
+\foreach \i in {1,4,7,10}
+\node[g2] (2-\i) at ({15+30*\i}:1.9315) {};
+
+\foreach \i in {2,5,8,11}
+\node[g1] (2-\i) at ({15+30*\i}:1.9315) {};
+
+\begin{scope}[on background layer]
+\node[circle, fill=whitesmoke, fit=(2-1) (2-7), inner sep=-3pt] (envelope) {};
+\end{scope}
+\end{tikzpicture}
+\end{center}
+
+
+## Motivation
+
+
+\begin{center}
+\includegraphics[scale=0.25]{popstrat.png}
+\end{center}
+
+\footnotetext[1]{\scriptsize{Marchini et al. Nature genetics (2004)}}
+
+
+
+## \texttt{sail}: Résultats sur un vrai jeux de données
+\vspace*{-0.35cm}
+
+\begin{itemize}
+\item \footnotesize{\texttt{Credit} dataset$^1$: $\quad \mathbf{Y}_{400 \times 1}\to$Credit card balance, $\quad \mathbf{X}_{400 \times 9}\to$ predictors}
+\end{itemize}
+
+\pause 
+\centering
+\includegraphics[width=\textwidth]{credit_sail_main}
+
+\footnotetext[1]{\scriptsize{\texttt{ISLR} package on CRAN}}
+
+
+## \texttt{sail}: Interactions avec la variable \texttt{Student}
+
+\centering
+\includegraphics[width=\textwidth]{credit_sail_interactions_no_legend}
+
+
+## \texttt{sail}: Interactions avec la variable \texttt{Student}
+
+\centering
+\includegraphics[width=\textwidth]{credit_sail_interactions}
